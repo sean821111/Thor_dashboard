@@ -3,6 +3,7 @@ Vital signs dashboard for Thor, an ear type wearable device.
 
 ![Thor_dathaboard_main](https://imgur.com/V7JYSWQ)
 
+![vital_sign_history](https://imgur.com/PxnOjvz.png)
 
 
 ## Installing Node.js and npm from NodeSource
