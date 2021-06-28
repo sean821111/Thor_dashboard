@@ -1,7 +1,7 @@
 # Thor_dashboard
 Vital signs dashboard for Thor, an ear type wearable device.
 
-![Thor_dathaboard_main](https://imgur.com/V7JYSWQ)
+![Thor_dathaboard_main](https://imgur.com/V7JYSWQ.png)
 
 ![vital_sign_history](https://imgur.com/PxnOjvz.png)
 
