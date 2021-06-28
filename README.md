@@ -1,11 +1,9 @@
 # Thor_dashboard
 Vital signs dashboard for Thor, an ear type wearable device.
 
-![https://www.notion.so/Vue-dashboard-env-build-5b55428809a549b998b902e449b2a986#6ac9007c07664860b3e8dae5444fea8b]
+![Thor_dathaboard_main](https://imgur.com/V7JYSWQ)
 
 
-Vital signs history
-Main page
 
 ## Installing Node.js and npm from NodeSource
 
