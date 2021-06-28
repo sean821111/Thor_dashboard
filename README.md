@@ -1,9 +1,8 @@
 # Thor_dashboard
 Vital signs dashboard for Thor, an ear type wearable device.
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b1892905-98e2-44b3-85b0-60ca2a04b0b2/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b1892905-98e2-44b3-85b0-60ca2a04b0b2/Untitled.png)
+![https://www.notion.so/Vue-dashboard-env-build-5b55428809a549b998b902e449b2a986#6ac9007c07664860b3e8dae5444fea8b]
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ec6eec01-afe3-4b72-b7b9-1baa5e862bad/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ec6eec01-afe3-4b72-b7b9-1baa5e862bad/Untitled.png)
 
 Vital signs history
 Main page
