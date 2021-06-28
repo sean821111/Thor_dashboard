@@ -1,6 +1,12 @@
 # Thor_dashboard
 Vital signs dashboard for Thor, an ear type wearable device.
 
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b1892905-98e2-44b3-85b0-60ca2a04b0b2/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b1892905-98e2-44b3-85b0-60ca2a04b0b2/Untitled.png)
+
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ec6eec01-afe3-4b72-b7b9-1baa5e862bad/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ec6eec01-afe3-4b72-b7b9-1baa5e862bad/Untitled.png)
+
+Vital signs history
+Main page
 
 ## Installing Node.js and npm from NodeSource
 
@@ -22,7 +28,7 @@ Vital signs dashboard for Thor, an ear type wearable device.
     node --version
     ```
 
-# mongodb
+## mongodb
 
 [mongo](https://hub.docker.com/_/mongo)
 
@@ -57,8 +63,40 @@ services:
 docker-compose -f stack.yml up
 ```
 
-# nodemon
+## nodemon
 
 nodemon is a tool that helps develop node.js based applications by automatically restarting the node application when file changes in the directory are detected.
 
 [nodemon](https://www.npmjs.com/package/nodemon)
+
+## install vue-cli
+
+```bash
+npm install -g @vue/cli
+```
+
+# Getting started
+
+```bash
+# enter the backend directory
+cd backend
+
+# install dependency
+npm install
+
+# running backend
+npm run start
+```
+
+```bash
+# enter the project directory
+cd vue-element-admin
+
+# install dependency
+npm install
+
+# develop
+npm run dev
+```
+
+
