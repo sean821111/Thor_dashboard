@@ -37,7 +37,7 @@
             <svg-icon icon-class="celsius" class-name="card-panel-icon" />
           </div>
           <span>體溫</span>
-          <span style="float: right">{{ device.vitalSigns.temp }}
+          <span style="float: right">{{ Math.round(device.vitalSigns.temp*10)/10 }}
             <span style="color: gray">℃</span>
           </span>
         </div>
@@ -61,7 +61,7 @@
             <svg-icon icon-class="perfusion" class-name="card-panel-icon" />
           </div>
           <span>灌注指標</span>
-          <span style="float: right" >{{ device.vitalSigns.pi }}
+          <span style="float: right" >{{ Math.round(device.vitalSigns.pi*100)/100 }}
             <span style="color: gray">％</span>
           </span>
         </div>
@@ -88,14 +88,14 @@
 </template>
 
 <script>
-
+import { crono } from 'vue-crono'
 export default {
 
   name: "Device",
   data(){
     return{
       spo2_thr: 90,
-      isConnected: this.device.isConnected
+      isConnected: this.device.isConnected,
     };
   },
   props: {
@@ -112,9 +112,12 @@ export default {
       }
     },
     goRecordPage(){
+      
       if (this.device.isConnected){
-        this.$router.push({ path: this.redirect || "/chart/index", query:{ deviceName: this.device.name }, params: { deviceName: 123 }});
+        this.$router.push({ path: this.redirect || "/chart/index", query:{ deviceName: this.device.name }, params: { residentId: this.device.resident._id }});
+        console.log(this.device._id)
       }
+      
     },
     deleteDevice() {
       this.$emit("delete-device", {
@@ -123,6 +126,7 @@ export default {
       });
     },
   },
+
 };
 </script>
 

@@ -58,7 +58,9 @@ export const constantRoutes = [
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
       meta: { title: 'Dashboard', icon: 'dashboard' }
-    }]
+    },
+
+   ]
   },
   {
     path: '/chart',
@@ -143,8 +145,14 @@ export const asyncRoutes = [
         name: 'EditResidentInfo',
         meta: { title: 'Edit Resident Info', noCache: true, activeMenu: '/infomation/index' },
         hidden: true
+    },
+    {
+      path: 'addRes',
+        component: () => import('@/views/infomation/addRes'),
+        name: 'AddResidentInfo',
+        meta: { title: 'Add Resident Info', noCache: true, activeMenu: '/infomation/addRes' },
+        hidden: true
     }
-    
    ]
   },
 

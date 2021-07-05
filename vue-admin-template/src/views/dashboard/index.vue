@@ -8,6 +8,7 @@
         circle
         @click="handleAddDevice"
       />
+      <el-button type="success" @click="addResident">新增住民</el-button>
       <el-row>
         <!-- use keyup instead of keydown, only my computer can't use -->
         <el-input
@@ -61,7 +62,7 @@ export default {
     fetchDeviceData() {
       getDeviceList().then((response) => {
         this.devices = response.data;
-        console.log("get device: "+JSON.stringify(this.devices));
+        // console.log("get device: "+JSON.stringify(this.devices));
       });
 
       
@@ -101,7 +102,19 @@ export default {
         this.backup = null;
       }
     },
+    addResident(){
+      this.$router.push({ path: this.redirect || "/infomation/addRes"});
+
+    }
+
   },
+  mounted(){
+      this.fetchDeviceData();
+  },
+  cron:{
+      time:120000,
+      method:'fetchDeviceData'
+  }
 };
 </script>
 

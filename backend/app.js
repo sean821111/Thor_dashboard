@@ -8,6 +8,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var cors = require('cors');
 var db = require('./database/db');
 var mqtt = require('./mqtt/mqtt');
+var compression = require('compression');
+const createError = require("http-errors");
 
 var users = require('./routes/users');
 var pairsDevices = require('./routes/pairs_devices');
@@ -19,6 +21,7 @@ var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser())
+app.use(compression())
 
 app.use(session({
   secret: 'keyboard cat',
@@ -41,6 +44,15 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/pairs/devices', pairsDevices);
 app.use('/api/v1/thor/devices', thorDevices);
 app.use('/api/v1/residents', residents);
+
+app.use((error, req, res, next) => {
+  if (res.headerSent)
+    return next(error);
+  console.log(error.code);
+  res.status(error.code || 500);
+  res.end({ message: error.message || 'An unknown error occurred!' });
+  //end send json
+});
 
 // passport config
 var User = require('./database/models/user');

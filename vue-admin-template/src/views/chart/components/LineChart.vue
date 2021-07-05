@@ -33,7 +33,7 @@ export default {
   },
   data() {
     return {
-      chart: null
+      chart: null,
     }
   },
   watch: {
@@ -57,6 +57,10 @@ export default {
     this.chart = null
   },
   methods: {
+    dateSubmit(dateRange){
+      this.dateRange = dateRange
+      console.log('line chart date range: ' + this.dateRange)
+    },
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
       this.setOptions(this.chartData)

@@ -123,7 +123,7 @@ export default {
     };
   },
   created(){
-      this.fetchResident();
+    this.fetchResident();
   },
 
   methods: {

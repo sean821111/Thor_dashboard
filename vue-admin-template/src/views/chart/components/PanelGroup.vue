@@ -1,5 +1,5 @@
 <template>
-  <el-row :gutter="40" class="panel-group">
+  <el-row :gutter="30" class="panel-group">
     <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('hr')">
         <div class="card-panel-icon-wrapper icon-hr">
@@ -9,7 +9,8 @@
           <div class="card-panel-text">
             心率 (BPM)
           </div >
-          <count-to :start-val="0" :end-val="vitalSigns.hr" :duration="3200" class="card-panel-num" />
+          <span class="card-panel-num">{{vitalSigns.hr}}</span>
+          <!-- <count-to :start-val="0" :end-val="vitalSigns.hr" :duration="3200" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
@@ -22,7 +23,8 @@
           <div class="card-panel-text">
             體溫(℃)
           </div>
-          <count-to :start-val="0" :end-val="vitalSigns.temp" :duration="3000" class="card-panel-num" />
+          <span class="card-panel-num">{{Math.round(vitalSigns.temp*10)/10}}</span>
+          <!-- <count-to :start-val="0" :end-val="vitalSigns.temp" :duration="3000" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
@@ -35,7 +37,8 @@
           <div class="card-panel-text">
             血氧濃度(%)
           </div>
-          <count-to :start-val="0" :end-val="vitalSigns.spo2" :duration="3000" class="card-panel-num" />
+          <span class="card-panel-num">{{vitalSigns.spo2}}</span>
+          <!-- <count-to :start-val="0" :end-val="vitalSigns.spo2" :duration="3000" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
@@ -49,7 +52,8 @@
           <div class="card-panel-text">
             灌注指標(%)
           </div>
-          <count-to :start-val="0" :end-val="vitalSigns.pi" :duration="3000" class="card-panel-num" />
+          <span class="card-panel-num">{{Math.round(vitalSigns.pi*100)/100}}</span>
+          <!-- <count-to :start-val="0" :end-val="vitalSigns.pi" :duration="3000" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
@@ -61,7 +65,7 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            血壓(SBP/DBP)
+            SBP/DBP
           </div>
           <count-to :start-val="0" :end-val="80" :duration="3000" class="card-panel-num" />
           <span class="card-panel-num">/ </span>
