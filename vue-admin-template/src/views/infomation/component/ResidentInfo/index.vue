@@ -1,29 +1,37 @@
 <template>
     <div class="grid-container">
         <div class="header">
-            <h1>{{bedNumber}}床-住民床位資訊</h1>
-            
+            <span style="float:left;">
+              <h1>{{this.resident.bedNumber}}床-住民床位資訊</h1>
+            </span>
+            <span style="float:right;">
+              <el-button type="primary" icon="el-icon-edit" @click="editMode">
+                編輯資訊
+              </el-button> 
+            </span> 
         </div>
+        
 
         <div class="info-content">
             <h2>住民資訊</h2>
-                <div class="grid-content">姓名：{{ info.name }}</div>
-                <div class="grid-content">性別：{{ info.gender }}</div>
-                <div class="grid-content">身份證：{{ info.idNumber }}</div>
-                <div class="grid-content" >身高：{{ info.height }} cm</div>
-                <div class="grid-content" >體重：{{ info.weight }} kg</div>
-                <div class="grid-content">出生日期：{{ info.birthday }}</div>
+                <div class="grid-content">姓名：{{ this.resident.info.name }}</div>
+                <div class="grid-content">性別：{{ this.resident.info.gender }}</div>
+                <div class="grid-content">身份證：{{ this.resident.info.idNumber }}</div>
+                <div class="grid-content" >身高：{{ this.resident.info.height }} cm</div>
+                <div class="grid-content" >體重：{{ this.resident.info.weight }} kg</div>
+                <div class="grid-content">出生日期：{{ new Date(this.resident.info.birthday).toLocaleDateString() }}</div>
         </div>
         <div class="condition">
             <h2>住民身體狀況</h2>
-            <div class="grid-content">身體狀況：{{ health }}</div>
+            <div class="grid-content">身體狀況：{{ this.resident.health }}</div>
         </div>
 
         <div class="device-info">
             <h2>裝置資訊</h2>
-            <div class="grid-content">床號：{{ bedNumber }}</div>
+            <div class="grid-content">床號：{{ this.resident.bedNumber }}</div>
 
-              <div class="grid-content">儀器編號：{{ device.name }}</div>
+            <div class="grid-content">Thor裝置1：{{ (this.resident.thorDevices.length > 0) ? this.resident.thorDevices[0].name : "null" }}</div>
+            <div class="grid-content">Thor裝置2：{{ (this.resident.thorDevices.length > 1) ? this.resident.thorDevices[1].name : "null" }}</div>
         </div>
     </div>
 </template>
@@ -37,17 +45,15 @@ export default {
   name: "ResidentInfo",
   data() {
     return {
-    
       editInfo: false,
-      info: null,
-      device: null,
-      health: null,
-      bedNumber: null,
-      residentData: null,
     };
   },
-  created(){
-      this.fetchResident();
+  props: {
+    resident: {
+      type: Object,
+      default: null,
+      required: true,
+    }
   },
   methods: {
     handleEdit() {
@@ -58,18 +64,11 @@ export default {
     },
     confirmEdit() {
     },
-
-    fetchResident() {
-        getResidentInfo("60b5e450d9ddc5d631dc9ece").then((response)=> {
-            this.info = response.data.info;
-            // this.info.birthday = new Date(info.birthday).substring(0,10);
-            this.device = response.data.device;
-            this.health = response.data.health;
-            this.bedNumber = response.data.bedNumber;
-            this.residentData = response.data;
-            
-        });
-    }
+    editMode() {
+      this.$emit("edit-mode");
+    },
+    
+    
   }
 }
 

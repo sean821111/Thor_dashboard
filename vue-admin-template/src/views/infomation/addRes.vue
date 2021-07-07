@@ -6,7 +6,7 @@
 import NewResident from './component/NewResident'
 
 export default {
-  name: 'Add New Resident',
+  name: 'AddNewResident',
   components: { NewResident }
 }
 </script>

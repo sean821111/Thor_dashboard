@@ -22,6 +22,13 @@ export function getResidentInfo(residentId) {
   })
 }
 
+export function getResidentList() {
+  return request({
+    url: 'residents/list',
+    method: 'get'
+  })
+}
+
 export function updateResident(residentId, resident) {
   return request({
     url: 'residents/update/' + residentId,
@@ -31,11 +38,20 @@ export function updateResident(residentId, resident) {
 }
 
 export function getResidentSleepRecord(residentId, dateRange) {
-    return request({
+  return request({
       url: 'residents/sleep/record/' + residentId,
       method: 'get',
       data: dateRange
     })
-  }
+  }  
+
+export function getResidentVitalSignsRecord(residentId, start, end){
+  return request({
+    url: 'residents/vital/signs/record/' + residentId + '/' + start + '/' + end, 
+    method: 'get',
+  })
+}  
+
+
 
 

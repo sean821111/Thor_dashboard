@@ -2,75 +2,64 @@
   <div class="app-container">
         <div class="info-container">
           
-            <h1>{{residentData.bedNumber}}床-住民床位資訊編輯</h1>
-
-            <el-button
-              v-if="editInfo"
-              type="success"
-              icon="el-icon-circle-check-outline"
-              style="float: right"
-              @click="confirmEdit"
-            >
-              儲存
-            </el-button>
-
-            <el-button
-              class="cancel-btn"
-              icon="el-icon-refresh"
-              type="warning"
-              style="float: right"
-              @click="cancelEditPage"
-            >
-              取消
-            </el-button>
-          <el-row :gutter="30">
-            <el-col :span=6>
-              <h2>住民資訊</h2>
-            </el-col>
-            <el-col :span=6>
-              <h2>住民身體狀況</h2>
-            </el-col>
-            <el-col :span=6>
-              <h2>裝置資訊</h2>
-            </el-col>
-          </el-row>
 
           <el-form
             class="resident-info"
-            ref="residentData"
-            :model="residentData"
-            label-width="100px"
+            ref="form"
+            :rules="rules"
+            :model="resident"
+            label-width="120px"
             size="35"
           >
+            <el-row>
+              <span style="float:left;">
+                <h1>{{resident.bedNumber}}床-住民床位資訊編輯</h1>
+              </span>
+              <span style="float:right;">
+                <el-button type="success" @click="save">儲存</el-button>
+                <el-button type="warning" @click="cancel">取消</el-button>
+              </span>
+            </el-row>
+            <el-row :gutter="30">
+              <el-col :span=6>
+                <h2>住民資訊</h2>
+              </el-col>
+              <el-col :span=6>
+                <h2>住民身體狀況</h2>
+              </el-col>
+              <el-col :span=6>
+                <h2>裝置資訊</h2>
+              </el-col>
+            </el-row>
             <el-row :gutter="30">
               <el-col :span="6">
-                <el-form-item label="姓名：">
-                  <el-input v-model="residentData.info.name" v-show="editInfo" style="width: 100px"></el-input>
+                <el-form-item label="姓名：" prop="name">
+                  <el-input v-model="resident.info.name" v-show="editInfo" style="width: 100px"></el-input>
                 </el-form-item>
                 <el-form-item label="性別：">
                   <div class="grid-content" v-show="editInfo">
-                    <el-radio v-model="residentData.info.gender" label="M">男</el-radio>
-                    <el-radio v-model="residentData.info.gender" label="F">女</el-radio>
+                    <el-radio v-model="resident.info.gender" label="M">男</el-radio>
+                    <el-radio v-model="resident.info.gender" label="F">女</el-radio>
                   </div>
                 </el-form-item>
 
-                <el-form-item label="身份證字號:">
-                  <el-input v-model="residentData.info.idNumber" v-show="editInfo" style="width: 150px"></el-input>
+                <el-form-item label="身份證字號:" prop="idNumber">
+                  <el-input v-model="resident.info.idNumber" v-show="editInfo" style="width: 150px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="身高:">
-                  <el-input v-model="residentData.info.height" v-show="editInfo" style="width: 80px"></el-input>
+                  <el-input v-model="resident.info.height" v-show="editInfo" style="width: 80px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="體重:">
-                  <el-input v-model="residentData.info.weight" v-show="editInfo" style="width: 80px"></el-input>
+                  <el-input v-model="resident.info.weight" v-show="editInfo" style="width: 80px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="出生日期:">
                         <el-date-picker
                         style="width: 160px"
                         type="date"
-                        v-model="residentData.info.birthday"
+                        v-model="resident.info.birthday"
                         v-show="editInfo"
                         ></el-date-picker>
                 </el-form-item>
@@ -80,22 +69,34 @@
                 <el-form-item label="身體狀況：">
                   <el-input
                     type="textarea"
-                    v-model="residentData.health"
+                    v-model="resident.health"
                     v-show="editInfo"
                   ></el-input>
                 </el-form-item>
               </el-col>
               
               <el-col :span="6">
-                <el-form-item label="床號：">
-                  <el-input v-model="residentData.bedNumber" v-show="editInfo"></el-input>
+                <el-form-item label="床號：" prop="bedNumber">
+                  <el-input v-model="resident.bedNumber" v-show="editInfo"></el-input>
                 </el-form-item>
 
-                <el-form-item label="儀器編號：">
-                  <el-input
-                    v-model="residentData.device.name"
-                    v-show="editInfo"
-                  ></el-input>
+                <el-form-item label="Thor裝置1：">
+                  <el-select v-model="thorDeviceNames[0]" placeholder="Select">
+                    <el-option
+                      v-for="deviceName in validThorDeviceNames"
+                      :key="deviceName"
+                      :value="deviceName">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="Thor裝置2：">
+                  <el-select v-model="thorDeviceNames[1]" placeholder="Select">
+                    <el-option
+                      v-for="deviceName in validThorDeviceNames"
+                      :key="deviceName"
+                      :value="deviceName">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </el-col>
 
@@ -107,44 +108,104 @@
 
 
 <script>
-import {getResidentInfo} from "@/api/resident"
+import { getDeviceList } from "@/api/device";
+import { updateResident } from "@/api/resident"
 
 export default {
   name: "EditInfo",
 
   data() {
+    const validateIdNumber = (rule, value, callback) => {
+      id = value.trim();
+      verification = id.match("^[A-Z][12]\\d{8}$")
+      if (!verification){
+        callback('身份證字號錯誤');
+      } else {
+        let conver = "ABCDEFGHJKLMNPQRSTUVXYWZIO"
+        let weights = [1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1]
+
+        id = String(conver.indexOf(id[0]) + 10) + id.slice(1);
+
+        checkSum = 0
+        for (let i = 0; i < id.length; i++) {
+          c = parseInt(id[i])
+          w = weights[i]
+          checkSum += c * w
+        }
+        if (checkSum % 10 == 0) {
+          callback('');
+        } else {
+          callback('檢核碼錯誤');
+        }
+      }
+    }
     return {
       editInfo: true,
-      residentData: null,
-      // device: null, 
-      // info: null,
-      // health: null,
-      // bedNumber: null,
+      thorDeviceNames: ['null', 'null'],
+      validThorDeviceNames: ['null'],
+      rules: {
+        name: [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
+        idNumber: [
+          { required: true, message: '請輸入身份證字號', trigger: 'blur'},
+          { validator: validateIdNumber, trigger: 'blur', }
+        ],
+        bedNumber: [{ required: true, message: '請輸入床號', trigger: 'blur' }]
+      }
     };
   },
+  props: {
+    resident: {
+      type: Object,
+      default: null,
+      required: true,
+    }
+  },
   created(){
-    this.fetchResident();
+    this.fetchDeviceData();
   },
 
   methods: {
-    fetchResident() {
-        getResidentInfo("60b5e450d9ddc5d631dc9ece").then((response)=> {
-            // this.info = response.data.info;
-            // this.device = response.data.device;
-            // this.health = response.data.health;
-            // this.bedNumber = response.data.bedNumber;
-            this.residentData = response.data;
-            console.log("bed number: " + residentData.bedNumber);
-            
+    fetchDeviceData() {
+      getDeviceList().then((response) => {
+        for (var i = 0; i < this.resident.thorDevices.length; i++) {
+          this.validThorDeviceNames.push(this.resident.thorDevices[i].name);
+          this.thorDeviceNames[i] = this.resident.thorDevices[i].name;
+        }
+        for (var i = 0; i < response.data.length; i++) {
+          if (response.data[i].resident == null) {
+            this.validThorDeviceNames.push(response.data[i].name);
+          }
+        }
+        console.log('this.validThorDeviceNames: ' + JSON.stringify(this.validThorDeviceNames))
+        
+      });
+    },
+    save(){
+      this.thorDeviceNames = this.thorDeviceNames.filter(deviceName => deviceName != 'null'); 
+      let data = {
+        info: this.resident.info,
+        health: this.resident.health,
+        bedNumber: this.resident.bedNumber,
+        remark: this.resident.remark,
+        pairsDeviceName: (this.resident.pairsDevice == null) ? null : this.resident.pairsDevice._id,
+	      thorDeviceNames: this.thorDeviceNames
+      };
+       this.$refs['form'].validate((valid) => {
+          if (valid) {
+            alert('submit!');
+            updateResident(this.resident._id, data).then((response) => {
+              this.$emit("reload");
+            })
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
         });
+      ;
     },
-     cancelEditPage(){
-      this.$router.push({ path: this.redirect || "/infomation/index", query:{ residentId: this.residentData.device._id }});
-      console.log("cancel edit");
+    cancel(){
+      this.$emit("info-mode");
     },
-    confirmEdit(){
-
-    }
   },
 };
 </script>
