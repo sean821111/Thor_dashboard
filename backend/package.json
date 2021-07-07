@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www",
-    "dev"  : "NODE_ENV=dev nodemon ./bin/www",
-    "prod" : "NODE_ENV=prod nodemon ./bin/www"
+    "dev": "NODE_ENV=dev nodemon ./bin/www",
+    "prod": "NODE_ENV=prod nodemon ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",

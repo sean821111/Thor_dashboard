@@ -35,7 +35,6 @@
 
 <script>
 import { mapGetters } from "vuex";
-import Device from "./components/Device";
 import Resident from "./components/Resident";
 import { getResidentList, deleteResident } from "@/api/resident";
 
@@ -46,7 +45,7 @@ let sseClient;
 export default {
   name: "Dashboard",
   components: {
-    Device, Resident
+    Resident
   },
   data() {
     return {
