@@ -60,10 +60,15 @@ export default {
   },
   methods: {
     fetchResident() {
+<<<<<<< HEAD
+=======
+      if (this.$route.query.residentId) {
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
         getResidentInfo(this.$route.query.residentId).then((response)=> {
             this.resident = response.data            
             console.log("resident: " + JSON.stringify(this.resident));
         });
+      }
     },
     changeMode() {
       this.editInfo = !this.editInfo;

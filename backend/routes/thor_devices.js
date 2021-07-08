@@ -15,10 +15,10 @@ router.post('/add', async (req, res, next) => {
         } else {
             req.body['isConnected'] = false;
             req.body['vitalSigns'] = {
-                temp: null,
-                hr: null,
-                spo2: null,
-                pi: null,
+                temp: -1,
+                hr: -1,
+                spo2: -1,
+                pi: -1
             };
             req.body['resident'] = null;
             new ThorDevice(req.body).save();
@@ -37,15 +37,25 @@ router.delete('/:deviceName', async (req, res, next) => {
         } else {
             if (device) {
                 if (device.resident) {
-                    Resident.findOne({ _id: device.resident }, (err, resident) => {
-                        if (err) {
-                            return res.status(500).json(error);
-                        } else if (resident) {
-                            resident.thorDevice = null;
-                            resident.save();
-                            res.status(200).end();
+                    Resident.updateOne({ _id: device.resident }, 
+                        {
+                            $pull: { thorDevices: device._id }
+                        },
+                        (err, result) => {
+                            if (err) {
+                                next(err);
+                            } else if (result.n != 0) {
+                                var message = {
+                                    name: device.name,
+                                    resident: null
+                                }
+                                deviceUpdate.sse.send(message);
+                                res.status(200).end();
+                            } else {
+                                res.status(404).end("Resident not update failed");
+                            }
                         }
-                    });
+                    );
                 } else {
                     res.status(200).end();
                 }
@@ -72,8 +82,19 @@ router.get('/list', async (req, res, next) => {
 });
 
 router.put('/connection/state/:deviceName', (req, res, next) => {
+    let update = {
+        isConnected: req.body.isConnected
+    }
+    if (!req.body.isConnected) {
+        update['vitalSigns'] = {
+            temp: -1,
+            hr: -1,
+            spo2: -1,
+            pi: -1
+        }
+    }
     ThorDevice.updateOne({ name: req.params.deviceName }, 
-        { $set: { isConnected: req.body.isConnected } },
+        { $set: update },
         (err, result) => {
             if (err) {
                 next(err);

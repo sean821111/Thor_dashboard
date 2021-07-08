@@ -47,7 +47,7 @@
         <span style="margin-right:20px;">username: admin</span>
         <span> password: any</span>
         <br />
-        <a href="/register">Register</a>
+        <router-link to="/register">Register</router-link>
       </div>
 
     </el-form>

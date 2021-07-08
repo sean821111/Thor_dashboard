@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon ./bin/www",
+    "dev": "NODE_ENV=dev nodemon ./bin/www",
+    "prod": "NODE_ENV=prod nodemon ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -19,7 +21,14 @@
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^6.1.0",
+<<<<<<< HEAD
     "sse-express": "^1.0.2",
     "vue-sse": "^2.2.0"
+=======
+    "sse-express": "^1.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.9"
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
   }
 }

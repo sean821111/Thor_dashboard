@@ -1,6 +1,7 @@
 <template>
   <div class="app-container">
         <div class="info-container">
+<<<<<<< HEAD
           <el-row>
             <span style="float:left;">
               <h1>住民資訊新增</h1>
@@ -22,16 +23,46 @@
             </el-col>
           </el-row>
 
+=======
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
           <el-form
             class="resident-info"
             ref="form"
+            :rules="rules"
             :model="form"
             label-width="120px"
             size="35"
           >
+            <el-row>
+              <span style="float:left;">
+                <h1>住民資訊新增</h1>
+              </span>
+              <span style="float:right;">
+                <el-form-item>
+                  <el-button type="success" @click="save">儲存</el-button>
+                  <el-button type="warning" @click="cancel">取消</el-button>
+                </el-form-item>
+              </span>
+            </el-row>  
+            <el-row :gutter="30">
+              <el-col :span=6>
+                <h2>住民資訊</h2>
+              </el-col>
+              <el-col :span=6>
+                <h2>住民身體狀況</h2>
+              </el-col>
+              <el-col :span=6>
+                <h2>裝置資訊</h2>
+              </el-col>
+            </el-row>
+
             <el-row :gutter="30">
               <el-col :span="6">
+<<<<<<< HEAD
                 <el-form-item label="姓名：">
+=======
+                <el-form-item label="姓名：" prop="info.name">
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                   <el-input v-model="form.info.name" style="width: 100px"></el-input>
                 </el-form-item>
                 <el-form-item label="性別：">
@@ -41,7 +72,11 @@
                   </div>
                 </el-form-item>
 
+<<<<<<< HEAD
                 <el-form-item label="身份證字號:">
+=======
+                <el-form-item label="身份證字號:" prop="info.idNumber">
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                   <el-input v-model="form.info.idNumber" style="width: 150px"></el-input>
                 </el-form-item>
 
@@ -72,7 +107,7 @@
               </el-col>
               
               <el-col :span="6">
-                <el-form-item label="床號：">
+                <el-form-item label="床號：" prop="bedNumber">
                   <el-input v-model="form.bedNumber"></el-input>
                 </el-form-item>
 
@@ -84,6 +119,7 @@
                       :value="deviceName">
                     </el-option>
                   </el-select>
+<<<<<<< HEAD
                 </el-form-item>
                 <el-form-item label="Thor裝置2：">
                   <el-select v-model="form.thorDeviceNames[1]" placeholder="Select">
@@ -94,6 +130,18 @@
                     </el-option>
                   </el-select>
                 </el-form-item>
+=======
+                </el-form-item>
+                <el-form-item label="Thor裝置2：">
+                  <el-select v-model="form.thorDeviceNames[1]" placeholder="Select">
+                    <el-option
+                      v-for="deviceName in validThorDeviceNames"
+                      :key="deviceName"
+                      :value="deviceName">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                 <!-- <el-form-item label="Pairs裝置：">
                   <el-select v-model="form.pairsDeviceName" placeholder="Select">
                     <el-option
@@ -122,6 +170,31 @@ export default {
   name: "NewResident",
 
   data() {
+    const validateIdNumber = (rule, value, callback) => {
+      console.log('validateIdNumber');
+      let id = value.trim();
+      let verification = id.match("^[A-Z][12]\\d{8}$")
+      if (!verification) {
+        callback(new Error('身份證字號錯誤'));
+      } else {
+        let conver = "ABCDEFGHJKLMNPQRSTUVXYWZIO"
+        let weights = [1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1]
+
+        id = String(conver.indexOf(id[0]) + 10) + id.slice(1);
+
+        let checkSum = 0;
+        for (let i = 0; i < id.length; i++) {
+          let c = parseInt(id[i]);
+          let w = weights[i];
+          checkSum += c * w;
+        }
+        if (checkSum % 10 == 0) {
+          callback();
+        } else {
+          callback(new Error('檢核碼錯誤'));
+        }
+      }
+    }
     return {
       form:{
         info: {
@@ -139,8 +212,21 @@ export default {
         pairsDeviceName: null
       },
       validThorDeviceNames: ['null'],
+<<<<<<< HEAD
       validPairsDevices: ['null']
     };
+=======
+      validPairsDevices: ['null'],
+      rules: {
+        'info.name': [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
+        'info.idNumber': [
+          { required: true, message: '請輸入身份證字號', trigger: 'blur'},
+          { validator: validateIdNumber, trigger: 'blur'}
+        ],
+        bedNumber: [{ required: true, message: '請輸入床號', trigger: 'blur' }]
+      }
+    }
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
   },
   created(){
     this.fetchDeviceData();
@@ -165,10 +251,25 @@ export default {
       console.log("save");
       this.form.thorDeviceNames = this.form.thorDeviceNames.filter(deviceName => deviceName !== 'null'); 
       console.log("form: " + JSON.stringify(this.form));
+<<<<<<< HEAD
       addResident(this.form).then((response) => {
         console.log("response: " + JSON.stringify(response));
         this.$router.push({ path: this.redirect || "/dashboard"});
       })
+=======
+      this.$refs['form'].validate((valid) => {
+          if (valid) {
+            addResident(this.form).then((response) => {
+              console.log("response: " + JSON.stringify(response));
+              this.$router.push({ path: this.redirect || "/dashboard"});
+            })
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
       
       
     }

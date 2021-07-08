@@ -19,7 +19,11 @@
                 <div class="grid-content">身份證：{{ this.resident.info.idNumber }}</div>
                 <div class="grid-content" >身高：{{ this.resident.info.height }} cm</div>
                 <div class="grid-content" >體重：{{ this.resident.info.weight }} kg</div>
+<<<<<<< HEAD
                 <div class="grid-content">出生日期：{{ this.resident.info.birthday }}</div>
+=======
+                <div class="grid-content">出生日期：{{ new Date(this.resident.info.birthday).toLocaleDateString() }}</div>
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
         </div>
         <div class="condition">
             <h2>住民身體狀況</h2>

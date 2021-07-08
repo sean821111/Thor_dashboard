@@ -100,8 +100,19 @@ router.delete('/:id', authenticated, (req, res, next) => {
             next(err);
         } else {
             if (result.n != 0) {
-                console.log(result); // Success 
-                res.status(200).end();
+                console.log(result); // Success
+                ThorDevice.updateMany({ resident: req.params.id }, 
+                    { $set: { resident: null } }, 
+                    (err, result2) => {
+                        if (err) {
+                            console.log('Device updateMany err: ' + err);
+                            next(err);
+                        } else if (result2.n != 0) {
+                            res.status(200).end();         
+                        } else {
+                            res.status(404).end('Device updateMany failed'); 
+                        }
+                    }); 
             } else {
                 res.status(404).end();
             }
@@ -290,6 +301,7 @@ router.get('/info/:id', authenticated, (req, res, next) => {
 });
 
 router.get('/list', authenticated, (req, res, next) => {
+<<<<<<< HEAD
     Resident.findOne({}, '-__v -sleepRecords -vitalSignsRecords')
         .populate('pairsDevice', 'name isConnected _id')
         // .populate('thorDevice', 'name isConnected _id')
@@ -301,6 +313,19 @@ router.get('/list', authenticated, (req, res, next) => {
             } else if (resident) {
                 console.log('Resident found: ' + resident);
                 res.status(200).json(resident);         
+=======
+    Resident.find({}, '-__v -sleepRecords -vitalSignsRecords')
+        .populate('pairsDevice', 'name isConnected _id')
+        // .populate('thorDevice', 'name isConnected _id')
+        .populate('thorDevices', 'name isConnected vitalSigns _id')
+        .exec((err, residents) => {
+            if (err) {
+                console.log('Resident findOne err: ' + err);
+                next(err);
+            } else if (residents) {
+                console.log('Resident found: ' + residents);
+                res.status(200).json(residents);         
+>>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
             } else {
                 console.log('Resident not found');
                 res.status(404).end('Resident not found');
@@ -546,7 +571,7 @@ router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
     if (filtered.length > 0) {
         res.status(200).json(filtered[0].output);  
     } else {
-        res.status(404).end('Vital signs record not found');  
+        res.status(200).json([]);
     }
 });
 
