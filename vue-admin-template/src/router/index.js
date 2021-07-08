@@ -150,7 +150,7 @@ export const asyncRoutes = [
       path: 'addRes',
         component: () => import('@/views/infomation/addRes'),
         name: 'AddResidentInfo',
-        meta: { title: 'Add Resident Info', noCache: true, activeMenu: '/infomation/addRes' },
+        meta: { title: 'AddResidentInfo', noCache: true, activeMenu: '/infomation/addRes' },
         hidden: true
     }
    ]

@@ -12,8 +12,13 @@
         </el-date-picker>
     </div> -->
         <el-row>
-          <el-col :xs="1.5" :sm="1.5" :md="1.5" :lg="1.5" style="padding:3px 3px 3px;margin-bottom:10px;">日期區間</el-col>
-          <el-col :xs="18" :sm="12" :md="10" :lg="7" style="margin-bottom:10px;">
+          <el-col :xs="1.5" :sm="1.5" :md="1.5" :lg="1.5" 
+            style="padding:3px 3px 3px;margin-bottom:10px; 
+            color: rgba(0, 0, 0, 0.45); 
+            font-weight: bold;">
+            日期區間
+          </el-col>
+          <el-col :xs="18" :sm="12" :md="10" :lg="7" :xl="5" style="margin-bottom:10px;">
                 <el-date-picker
                 v-model="dateRange"
                 type="daterange"
@@ -22,11 +27,12 @@
                 range-separator="至"
                 start-placeholder="開始日期"
                 end-placeholder="结束日期"
+                value-format="timestamp"
                 :picker-options="pickerOptions2">
                 </el-date-picker>
           </el-col>
           <el-col :xs="3" :sm="3" :md="3" :lg="3" >
-            <el-button type="primary" @click="dateSubmit">確認</el-button>
+            <el-button type="primary" @click="dateSubmit" style="font-size: 16px;">確認</el-button>
           </el-col>
         </el-row>
   </div>
@@ -76,7 +82,6 @@
             });
         } else {
             this.$emit('dateSubmit', this.dateRange);
-            console.log("date select: "  + this.dateRange[0].toISOString());
         }
         
       }

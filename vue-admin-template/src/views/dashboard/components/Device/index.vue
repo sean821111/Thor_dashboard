@@ -5,8 +5,12 @@
       <span v-if="device.vitalSigns.spo2!=undefined & device.vitalSigns.spo2<spo2_thr">
         <svg-icon icon-class="warning" class-name="icon-warning" />
       </span>
-      <span v-if="device.resident">{{ device.resident.bedNumber }}</span>
+      <span v-if="device.resident">{{ device.resident.bedNumber }} - </span>
       <span v-else>Bed #</span>
+      
+      <span v-if="device.resident">{{ device.resident.info.name }}</span>
+
+
 
       <i class="el-icon-info" style="float: right" @click="goToInfoPage" />
       <i class="el-icon-delete" style="float: right" @click="deleteDevice" />
@@ -66,13 +70,13 @@
           </span>
         </div>
 
-        <div class="text">
+        <!-- <div class="text">
           <div class="icon-pi">
             <svg-icon icon-class="blood-pressure" class-name="card-panel-icon" />
           </div>
           <span>血壓</span>
           <span style="float: right" >{{ }}/{{ }}</span>
-        </div>
+        </div> -->
         
       </el-col>
       <el-col :span="6">
@@ -112,11 +116,11 @@ export default {
       }
     },
     goRecordPage(){
-      
-      if (this.device.isConnected){
-        this.$router.push({ path: this.redirect || "/chart/index", query:{ deviceName: this.device.name }, params: { residentId: this.device.resident._id }});
+      // if (this.device.isConnected){
+        this.$router.push({ path: this.redirect || "/chart/index", query:{ residentId: this.device.resident._id }});
+        // this.$router.push({ name: this.redirect || "/chart/index", params: { residentId: this.device.resident._id }});
         console.log(this.device._id)
-      }
+      // }
       
     },
     deleteDevice() {

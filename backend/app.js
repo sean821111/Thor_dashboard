@@ -15,6 +15,7 @@ var users = require('./routes/users');
 var pairsDevices = require('./routes/pairs_devices');
 var thorDevices = require('./routes/thor_devices');
 var residents = require('./routes/residents');
+var deviceUpdate = require('./routes/device_update');
 
 var app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/pairs/devices', pairsDevices);
 app.use('/api/v1/thor/devices', thorDevices);
 app.use('/api/v1/residents', residents);
+app.get('/api/v1/device/update', deviceUpdate.sse.init);
 
 app.use((error, req, res, next) => {
   if (res.headerSent)

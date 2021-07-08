@@ -38,4 +38,18 @@ export function getResidentSleepRecord(residentId, dateRange) {
     })
   }
 
+  // export function getResidentVitalSignsRecord(residentId, dateRange) {
+  //   console.log("-----------api call:" + JSON.stringify(dateRange));
+  //   return request({
+  //     url: 'residents/vital/signs/record/' + residentId,
+  //     method: 'get',
+  //     data: dateRange
+  //   })
+  // }
 
+  export function getResidentVitalSignsRecord(residentId, start, end){
+    return request({
+    url: 'residents/vital/signs/record/' + residentId + '/' + start + '/' + end, 
+    method: 'get',
+    })
+   }

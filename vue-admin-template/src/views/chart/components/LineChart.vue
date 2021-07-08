@@ -29,7 +29,11 @@ export default {
     chartData: {
       type: Object,
       required: true
-    }
+    },
+    chartTime: {
+      type: Array,
+      required: true
+    },
   },
   data() {
     return {
@@ -39,10 +43,10 @@ export default {
   watch: {
     chartData: {
       deep: true,
-      handler(val) {
-        this.setOptions(val)
+      handler(val, time, chartOption) {
+        this.setOptions(val, time, chartOption)
       }
-    }
+    },
   },
   mounted() {
     this.$nextTick(() => {
@@ -57,18 +61,14 @@ export default {
     this.chart = null
   },
   methods: {
-    dateSubmit(dateRange){
-      this.dateRange = dateRange
-      console.log('line chart date range: ' + this.dateRange)
-    },
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
       this.setOptions(this.chartData)
     },
-    setOptions({ expectedData, actualData } = {}) {
+    setOptions({ val, time, chartOption} = {}) {
       this.chart.setOption({
         xAxis: {
-          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          data: time,
           boundaryGap: false,
           axisTick: {
             show: false
@@ -91,44 +91,38 @@ export default {
         yAxis: {
           axisTick: {
             show: false
-          }
-        },
-        legend: {
-          data: ['last week', 'this week']
-        },
-        series: [{
-          name: 'last week', itemStyle: {
-            normal: {
-              color: '#FF005A',
-              lineStyle: {
-                color: '#FF005A',
-                width: 2
-              }
-            }
           },
-          smooth: true,
-          type: 'line',
-          data: expectedData,
-          animationDuration: 2800,
-          animationEasing: 'cubicInOut'
+          name: chartOption.unit
         },
-        {
-          name: 'this week',
+        title:{
+          left: 'center',
+          text: chartOption.title,
+          textStyle: {
+            fontSize: 24,
+          }
+          
+        },
+        
+        // legend: {
+        //   data: ['this week']
+        // },
+        series: [{
+          name: chartOption.title,
           smooth: true,
           type: 'line',
           itemStyle: {
             normal: {
               color: '#3888fa',
               lineStyle: {
-                color: '#3888fa',
+                color: chartOption.color,
                 width: 2
               },
               areaStyle: {
-                color: '#f3f8ff'
+                color: chartOption.areaColor
               }
             }
           },
-          data: actualData,
+          data: val,
           animationDuration: 2800,
           animationEasing: 'quadraticOut'
         }]

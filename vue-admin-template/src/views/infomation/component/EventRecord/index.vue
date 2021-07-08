@@ -68,6 +68,11 @@ export default {
       value1: "",
     };
   },
+  methods: {
+    loading() {
+      
+    }
+  }
 };
 </script>
 

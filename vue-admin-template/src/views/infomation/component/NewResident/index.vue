@@ -1,27 +1,15 @@
 <template>
   <div class="app-container">
         <div class="info-container">
-          
-            <h1>住民資訊新增</h1>
-
-            <el-button
-              type="success"
-              icon="el-icon-circle-check-outline"
-              style="float: right"
-              @click="confirmEdit"
-            >
-              儲存
-            </el-button>
-
-            <el-button
-              class="cancel-btn"
-              icon="el-icon-refresh"
-              type="warning"
-              style="float: right"
-              @click="cancelEditPage"
-            >
-              取消
-            </el-button>
+          <el-row>
+            <span style="float:left;">
+              <h1>住民資訊新增</h1>
+            </span>
+            <span style="float:right;">
+              <el-button type="success" @click="save">儲存</el-button>
+              <el-button type="warning" @click="cancel">取消</el-button>
+            </span>
+          </el-row>  
           <el-row :gutter="30">
             <el-col :span=6>
               <h2>住民資訊</h2>
@@ -38,38 +26,38 @@
             class="resident-info"
             ref="form"
             :model="form"
-            label-width="100px"
+            label-width="120px"
             size="35"
           >
             <el-row :gutter="30">
               <el-col :span="6">
                 <el-form-item label="姓名：">
-                  <el-input v-model="form.name" style="width: 100px"></el-input>
+                  <el-input v-model="form.info.name" style="width: 100px"></el-input>
                 </el-form-item>
                 <el-form-item label="性別：">
-                  <div class="grid-content" v-show="editInfo">
-                    <el-radio v-model="form.gender" label="M">男</el-radio>
-                    <el-radio v-model="form.gender" label="F">女</el-radio>
+                  <div class="grid-content">
+                    <el-radio v-model="form.info.gender" label="M">男</el-radio>
+                    <el-radio v-model="form.info.gender" label="F">女</el-radio>
                   </div>
                 </el-form-item>
 
                 <el-form-item label="身份證字號:">
-                  <el-input v-model="form.idNumber" style="width: 150px"></el-input>
+                  <el-input v-model="form.info.idNumber" style="width: 150px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="身高:">
-                  <el-input v-model="form.height" style="width: 80px"></el-input>
+                  <el-input v-model="form.info.height" style="width: 80px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="體重:">
-                  <el-input v-model="form.weight" style="width: 80px"></el-input>
+                  <el-input v-model="form.info.weight" style="width: 80px"></el-input>
                 </el-form-item>
 
                 <el-form-item label="出生日期:">
                         <el-date-picker
                         style="width: 160px"
                         type="date"
-                        v-model="form.birthday"
+                        v-model="form.info.birthday"
                         ></el-date-picker>
                 </el-form-item>
               </el-col>
@@ -88,12 +76,34 @@
                   <el-input v-model="form.bedNumber"></el-input>
                 </el-form-item>
 
-                <el-form-item label="儀器編號：">
-                  <el-input
-                    v-model="form.deviceName"
-                    v-show="editInfo"
-                  ></el-input>
+                <el-form-item label="Thor裝置1：">
+                  <el-select v-model="form.thorDeviceNames[0]" placeholder="Select">
+                    <el-option
+                      v-for="deviceName in validThorDeviceNames"
+                      :key="deviceName"
+                      :value="deviceName">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
+                <el-form-item label="Thor裝置2：">
+                  <el-select v-model="form.thorDeviceNames[1]" placeholder="Select">
+                    <el-option
+                      v-for="deviceName in validThorDeviceNames"
+                      :key="deviceName"
+                      :value="deviceName">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+                <!-- <el-form-item label="Pairs裝置：">
+                  <el-select v-model="form.pairsDeviceName" placeholder="Select">
+                    <el-option
+                      v-for="device in validPairsDevices"
+                      :key="device.address"
+                      :label="device.name"
+                      :value="device.address">
+                    </el-option>
+                  </el-select>
+                </el-form-item> -->
               </el-col>
 
             </el-row>
@@ -104,6 +114,9 @@
 
 
 <script>
+import { getDeviceList } from "@/api/device";
+import { addResident } from "@/api/resident";
+
 
 export default {
   name: "NewResident",
@@ -111,27 +124,53 @@ export default {
   data() {
     return {
       form:{
-        name:'',
-        gender:'',
-        idNumber:'',
-        height:'',
-        weight:'',
-        birthday:'',
+        info: {
+          name:'',
+          gender:'',
+          idNumber:'',
+          height:'',
+          weight:'',
+          birthday:'',
+        },
         health:'',
         bedNumber:'',
-        deviceName:'',
-      }
+        remark: null,
+        thorDeviceNames: ['null', 'null'],
+        pairsDeviceName: null
+      },
+      validThorDeviceNames: ['null'],
+      validPairsDevices: ['null']
     };
   },
   created(){
+    this.fetchDeviceData();
   },
 
   methods: {
-    cancelEditPage(){
-      console.log("cancel edit");
+    fetchDeviceData() {
+      getDeviceList().then((response) => {
+        for (var i = 0; i < response.data.length; i++) {
+          if (response.data[i].resident == null) {
+            this.validThorDeviceNames.push(response.data[i].name);
+          }
+        }
+        console.log('this.validThorDeviceNames: ' + JSON.stringify(this.validThorDeviceNames))
+      });
     },
-    confirmEdit(){
-        // this.$router.push({ path: this.redirect || "/infomation/index", query:{ residentId: this.residentData.device._id }});
+    cancel() {
+      console.log("cancel");
+      this.$router.push({ path: this.redirect || "/dashboard"});
+    },
+    save() {
+      console.log("save");
+      this.form.thorDeviceNames = this.form.thorDeviceNames.filter(deviceName => deviceName !== 'null'); 
+      console.log("form: " + JSON.stringify(this.form));
+      addResident(this.form).then((response) => {
+        console.log("response: " + JSON.stringify(response));
+        this.$router.push({ path: this.redirect || "/dashboard"});
+      })
+      
+      
     }
   },
 };

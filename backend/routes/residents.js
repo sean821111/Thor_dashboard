@@ -4,12 +4,8 @@ const PairsDevice = require('../database/models/pairs_device');
 const ThorDevice = require('../database/models/thor_device');
 const Resident = require('../database/models/resident');
 var authenticated = require('./authenticated');
-var sseExpress = require('sse-express');
-var SSE = require('express-sse');
-var sse = new SSE(["initial"]);
+var deviceUpdate = require('./device_update');
 var router = express.Router();
-
-router.get('/bind/device', sse.init);
 
 router.post('/add', authenticated, async (req, res, next) => {
 
@@ -17,17 +13,42 @@ router.post('/add', authenticated, async (req, res, next) => {
     let data = req.body;
 
     let pairsDevice = await PairsDevice.findOne({ "name": data.pairsDeviceName });
-    let thorDevice = await ThorDevice.findOne({ "name": data.thorDeviceName });
-   
-
+    // let thorDevice = await ThorDevice.findOne({ "name": data.thorDeviceName });
+    let thorDevices = await ThorDevice.find({ "name": { $in: data.thorDeviceNames } });
+    
+    data['pairsDevice'] = null;
     if (pairsDevice) {
-        delete data['pairsDeviceName']
-        data['pairsDevice'] = pairsDevice._id;
+        if (pairsDevice.resident == null) 
+            data['pairsDevice'] = pairsDevice._id;
+        else
+            return res.status(403).end('Pairs device already bind'); 
+    } else if (data.pairsDeviceName)
+        return res.status(404).end('Pairs device not found'); 
+    delete data['pairsDeviceName'];
+
+    // data['thorDevice'] = null;
+    // if (thorDevice) {
+    //     if (thorDevice.resident == null) 
+    //         data['thorDevice'] = thorDevice._id;
+    //     else
+    //         return res.status(403).end('Thor device already bind'); 
+    // } else if (data.thorDeviceName)
+    //     return res.status(404).end('Thor device not found');  
+    // delete data['thorDeviceName'];
+
+    data['thorDevices'] = []
+    if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
+        for (var i = 0; i < thorDevices.length; ++i)
+            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(thorDevices[i].name), 1);
+        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
     }
-    if (thorDevice) {
-        delete data['thorDeviceName']
-        data['thorDevice'] = thorDevice._id;
-    }
+    for (var i = 0; i < thorDevices.length; ++i) 
+        if (thorDevices[i].resident != null)
+            return res.status(403).end('Thor device already bind: ' + thorDevices[i].name);
+
+    for (var i = 0; i < thorDevices.length; i++)
+        data['thorDevices'].push(thorDevices[i]._id);
+    delete data['thorDeviceNames'];
 
     Resident.findOne({ 'info.idNumber': data.info.idNumber }, (err, resident) => {
         if (err) {
@@ -45,10 +66,28 @@ router.post('/add', authenticated, async (req, res, next) => {
                 pairsDevice.save();
                 sse.send(pairsDevice.resident.toString(), 'BIND_PAIRS_DEVICE', pairsDevice.address);
             }
-            if (thorDevice) {
-                thorDevice.resident = resident._id;
-                thorDevice.save();
-                sse.send(thorDevice.resident.toString(), 'BIND_THOR_DEVICE', thorDevice.address);
+
+            // if (thorDevice) {
+            //     thorDevice.resident = resident._id;
+            //     thorDevice.save();
+            //     sse.send(thorDevice.resident.toString(), 'BIND_THOR_DEVICE', thorDevice.address);
+            // }
+            
+            for (var i = 0; i < thorDevices.length; i++) {
+                console.log("Bind device: " + thorDevices[i].name);
+                thorDevices[i].resident = resident._id;
+                thorDevices[i].save();
+                var message = {
+                    name: thorDevices[i].name,
+                    resident: {
+                        info: {
+                          name: resident.info.name
+                        },
+                        _id: resident._id,
+                        bedNumber: resident.bedNumber
+                      }
+                }
+                deviceUpdate.sse.send(message);
             }
             res.status(200).end();
         }
@@ -72,7 +111,7 @@ router.delete('/:id', authenticated, (req, res, next) => {
 
 router.put('/update/:id', authenticated, async (req, res, next) => {
     let data = req.body;
-    let resident = await Resident.findOne({ '_id': req.params.id });
+    let resident = await Resident.findOne({ _id: req.params.id });
 
     if (resident == null)
         return res.status(404).end('Resident not found');  
@@ -94,15 +133,23 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
     }
 
     let newPairsDevice = await PairsDevice.findOne({ name: data.pairsDeviceName });
-    let isBindNewDevice = false;
     if (newPairsDevice) {
         if (newPairsDevice.resident == null) {
             // Bind a new device.
             update['pairsDevice'] = newPairsDevice._id;
             newPairsDevice.resident = resident._id; 
             newPairsDevice.save();
-            isBindNewDevice = true;
-            sse.send(newPairsDevice.resident.toString(), 'BIND_PAIRS_DEVICE', newPairsDevice.address);
+            var message = {
+                name: newPairsDevice.name,
+                resident: {
+                    info: {
+                      name: resident.info.name
+                    },
+                    _id: resident._id,
+                    bedNumber: resident.bedNumber
+                  }
+            }
+            deviceUpdate.sse.send(message);
         } else if (newPairsDevice.resident.equals(resident._id)) {
             update['pairsDevice'] = newPairsDevice._id;
         } else {
@@ -113,62 +160,120 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
     }
     
     if (resident.pairsDevice) {
-        if (data.pairsDeviceName == null || isBindNewDevice) {
-            // Unbind device or bind another device
-            let oldPairsDevice = await PairsDevice.findOne({ _id: resident.pairsDevice });
+        let oldPairsDevice = await PairsDevice.findOne({ _id: resident.pairsDevice });
+        if (oldPairsDevice.name != data.pairsDeviceName) {
+            // Unbind device
             oldPairsDevice.resident = null;
             oldPairsDevice.save();
+            if (data.thorDeviceName == null) {
+                var message = {
+                    name: oldPairsDevice.name,
+                    resident: null
+                }
+                deviceUpdate.sse.send(message);
+            }
         }
     }
 
-    let newThorDevice = await ThorDevice.findOne({ name: data.thorDeviceName });
-    isBindNewDevice = false;
-    if (newThorDevice) {
+    // let newThorDevice = await ThorDevice.findOne({ name: data.thorDeviceName });
+    // if (newThorDevice) {
+    //     if (newThorDevice.resident == null) {
+    //         // Bind a new device.
+    //         update['thorDevice'] = newThorDevice._id;
+    //         newThorDevice.resident = resident._id; 
+    //         newThorDevice.save();
+    //         sse.send(newThorDevice.resident.toString(), 'BIND_THOR_DEVICE', newThorDevice.address);
+    //     } else if (newThorDevice.resident.equals(resident._id)) {
+    //         update['thorDevice'] = newThorDevice._id;
+    //     } else {
+    //         return res.status(403).end('Thor device already bind');
+    //     }
+    // } else if (data.thorDeviceName) {
+    //     return res.status(404).end('Thor device not found');
+    // }
+    
+    // if (resident.thorDevice) {
+    //     let oldThorDevice = await ThorDevice.findOne({ _id: resident.thorDevice });
+    //     if (oldThorDeviceame != data.thorDeviceName) {
+    //         // Unbind device
+    //         oldThorDevice.resident = null;
+    //         oldThorDevice.save();
+    //         if (data.thorDeviceName == null)
+    //             sse.send(null, 'UNBIND_THOR_DEVICE', oldThorDevice.address);
+    //     }
+    // }
+
+    let newThorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
+    update['thorDevices'] = [];
+    if (data.thorDeviceNames.length > 0 && newThorDevices.length != data.thorDeviceNames.length) {
+        for (var i = 0; i < newThorDevices.length; ++i)
+            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(newThorDevices[i].name), 1);
+        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
+    }
+    for (var i = 0; i < newThorDevices.length; ++i) 
+        if (newThorDevices[i].resident != null && !newThorDevices[i].resident.equals(resident._id))
+            return res.status(403).end('Thor device already bind: ' + newThorDevices[i].name);
+  
+    for (var i = 0; i < newThorDevices.length; ++i) {
+        var newThorDevice = newThorDevices[i];
         if (newThorDevice.resident == null) {
             // Bind a new device.
-            update['thorDevice'] = newThorDevice._id;
+            console.log("Bind device: " + newThorDevice.name);
+            update['thorDevices'].push(newThorDevice._id);
             newThorDevice.resident = resident._id; 
             newThorDevice.save();
-            isBindNewDevice = true;
-            sse.send(newThorDevice.resident.toString(), 'BIND_THOR_DEVICE', newThorDevice.address);
+            var message = {
+                name: newThorDevice.name,
+                resident: {
+                    info: {
+                      name: resident.info.name
+                    },
+                    _id: resident._id,
+                    bedNumber: resident.bedNumber
+                  }
+            }
+            deviceUpdate.sse.send(message);
         } else if (newThorDevice.resident.equals(resident._id)) {
-            update['thorDevice'] = newThorDevice._id;
-        } else {
-            return res.status(403).end('Thor device already bind');
-        }
-    } else if (data.thorDeviceName) {
-        return res.status(404).end('Thor device not found');
-    }
-    
-    if (resident.thorDevice) {
-        if (data.thorDeviceName == null || isBindNewDevice) {
-            // Unbind device or bind another device
-            let oldThorDevice = await ThorDevice.findOne({ _id: resident.thorDevice });
-            if (data.thorDeviceName == null)
-                sse.send(null, 'UNBIND_THOR_DEVICE', oldThorDevice.address);
-            oldThorDevice.resident = null;
-            oldThorDevice.save();
-            
+            update['thorDevices'].push(newThorDevice._id);
         }
     }
 
-    Resident.updateOne({ _id: req.params.id, 'info.idNumber': data.info.idNumber }, { $set: update }, (err, result) => {
-        if (err) {
-            console.log('Resident updateOne err: ' + err);
-            next(err);
-        } else if (result.n != 0) {
-            res.status(200).end();         
-        } else {
-            res.status(404).end('Resident update failed'); 
+    let oldThorDevices = await ThorDevice.find({ _id: { $in: resident.thorDevices } });
+    for (var i = 0; i < oldThorDevices.length; ++i) {
+        var oldThorDevice = oldThorDevices[i];
+        if (data.thorDeviceNames.indexOf(oldThorDevice.name) == -1) {
+            console.log("Unbind device: " + oldThorDevice.name);
+            oldThorDevice.resident = null;
+            oldThorDevice.save();
+            var message = {
+                name: oldThorDevice.name,
+                resident: null
+            }
+            deviceUpdate.sse.send(message);
         }
-    });  
+    }
+
+    Resident.updateOne({ _id: req.params.id, 'info.idNumber': data.info.idNumber },
+        { $set: update }, 
+        (err, result) => {
+            if (err) {
+                console.log('Resident updateOne err: ' + err);
+                next(err);
+            } else if (result.n != 0) {
+                res.status(200).end();         
+            } else {
+                res.status(404).end('Resident update failed'); 
+            }
+        }
+    );  
 });
 
 
 router.get('/info/:id', authenticated, (req, res, next) => {
-    Resident.findOne({ _id: req.params.id }, '-__v -sleepRecords -vitalSignsRecords' )
+    Resident.findOne({ _id: req.params.id }, '-__v -sleepRecords -vitalSignsRecords')
         .populate('pairsDevice', 'name isConnected _id')
-        .populate('thorDevice', 'name isConnected _id')
+        // .populate('thorDevice', 'name isConnected _id')
+        .populate('thorDevices', 'name isConnected _id')
         .exec((err, resident) => {
             if (err) {
                 console.log('Resident findOne err: ' + err);
@@ -180,7 +285,28 @@ router.get('/info/:id', authenticated, (req, res, next) => {
                 console.log('Resident not found');
                 res.status(404).end('Resident not found');
             }
-        });
+        }
+    );
+});
+
+router.get('/list', authenticated, (req, res, next) => {
+    Resident.findOne({}, '-__v -sleepRecords -vitalSignsRecords')
+        .populate('pairsDevice', 'name isConnected _id')
+        // .populate('thorDevice', 'name isConnected _id')
+        .populate('thorDevices', 'name isConnected _id')
+        .exec((err, resident) => {
+            if (err) {
+                console.log('Resident findOne err: ' + err);
+                next(err);
+            } else if (resident) {
+                console.log('Resident found: ' + resident);
+                res.status(200).json(resident);         
+            } else {
+                console.log('Resident not found');
+                res.status(404).end('Resident not found');
+            }
+        }
+    );
 });
 
 
@@ -366,7 +492,7 @@ router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
     console.log("end: "+ end.toISOString());
     console.log("startDay: "+ startDay.toISOString());
     console.log("endDay: "+ endDay.toISOString());
-
+    
     let filtered = await Resident.aggregate([
         { $match:  { _id: id } },
         { $project: {
@@ -434,12 +560,14 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
 
+    console.log("--------------" + JSON.stringify(req.body));
+    
     console.log("id: "+ id);
     console.log("start: "+ start.toISOString());
     console.log("end: "+ end.toISOString());
     console.log("startDay: "+ startDay.toISOString());
     console.log("endDay: "+ endDay.toISOString());
-
+    
     let filtered = await Resident.aggregate([
         { $match:  { _id: id } },
         { $project: {
