@@ -34,7 +34,7 @@
 
             <el-row :gutter="30">
               <el-col :span="6">
-                <el-form-item label="姓名：" prop="name">
+                <el-form-item label="姓名：" prop="info.name">
                   <el-input v-model="form.info.name" style="width: 100px"></el-input>
                 </el-form-item>
                 <el-form-item label="性別：">
@@ -44,7 +44,7 @@
                   </div>
                 </el-form-item>
 
-                <el-form-item label="身份證字號:" prop="idNumber">
+                <el-form-item label="身份證字號:" prop="info.idNumber">
                   <el-input v-model="form.info.idNumber" style="width: 150px"></el-input>
                 </el-form-item>
 
@@ -126,26 +126,27 @@ export default {
 
   data() {
     const validateIdNumber = (rule, value, callback) => {
-      id = value.trim();
-      verification = id.match("^[A-Z][12]\\d{8}$")
-      if (!verification){
-        callback('身份證字號錯誤');
+      console.log('validateIdNumber');
+      let id = value.trim();
+      let verification = id.match("^[A-Z][12]\\d{8}$")
+      if (!verification) {
+        callback(new Error('身份證字號錯誤'));
       } else {
         let conver = "ABCDEFGHJKLMNPQRSTUVXYWZIO"
         let weights = [1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1]
 
         id = String(conver.indexOf(id[0]) + 10) + id.slice(1);
 
-        checkSum = 0
+        let checkSum = 0;
         for (let i = 0; i < id.length; i++) {
-          c = parseInt(id[i])
-          w = weights[i]
-          checkSum += c * w
+          let c = parseInt(id[i]);
+          let w = weights[i];
+          checkSum += c * w;
         }
         if (checkSum % 10 == 0) {
-          callback('');
+          callback();
         } else {
-          callback('檢核碼錯誤');
+          callback(new Error('檢核碼錯誤'));
         }
       }
     }
@@ -168,10 +169,10 @@ export default {
       validThorDeviceNames: ['null'],
       validPairsDevices: ['null'],
       rules: {
-        name: [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
-        idNumber: [
+        'info.name': [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
+        'info.idNumber': [
           { required: true, message: '請輸入身份證字號', trigger: 'blur'},
-          { validator: validateIdNumber, trigger: 'blur', }
+          { validator: validateIdNumber, trigger: 'blur'}
         ],
         bedNumber: [{ required: true, message: '請輸入床號', trigger: 'blur' }]
       }
@@ -202,7 +203,6 @@ export default {
       console.log("form: " + JSON.stringify(this.form));
       this.$refs['form'].validate((valid) => {
           if (valid) {
-            alert('submit!');
             addResident(this.form).then((response) => {
               console.log("response: " + JSON.stringify(response));
               this.$router.push({ path: this.redirect || "/dashboard"});

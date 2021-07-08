@@ -27,13 +27,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    restart: always
     ports:
       - 3000:3000
+    depends_on:
+      - mongo
 
   frontend:
     image: wistron-care-dashboard
     build:
       context: ./vue-admin-template
       dockerfile: Dockerfile
+    restart: always
     ports:
       - 9526:9526
+    depends_on:
+      - backend
