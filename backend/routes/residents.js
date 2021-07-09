@@ -301,19 +301,7 @@ router.get('/info/:id', authenticated, (req, res, next) => {
 });
 
 router.get('/list', authenticated, (req, res, next) => {
-<<<<<<< HEAD
-    Resident.findOne({}, '-__v -sleepRecords -vitalSignsRecords')
-        .populate('pairsDevice', 'name isConnected _id')
-        // .populate('thorDevice', 'name isConnected _id')
-        .populate('thorDevices', 'name isConnected _id')
-        .exec((err, resident) => {
-            if (err) {
-                console.log('Resident findOne err: ' + err);
-                next(err);
-            } else if (resident) {
-                console.log('Resident found: ' + resident);
-                res.status(200).json(resident);         
-=======
+
     Resident.find({}, '-__v -sleepRecords -vitalSignsRecords')
         .populate('pairsDevice', 'name isConnected _id')
         // .populate('thorDevice', 'name isConnected _id')
@@ -325,7 +313,6 @@ router.get('/list', authenticated, (req, res, next) => {
             } else if (residents) {
                 console.log('Resident found: ' + residents);
                 res.status(200).json(residents);         
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
             } else {
                 console.log('Resident not found');
                 res.status(404).end('Resident not found');

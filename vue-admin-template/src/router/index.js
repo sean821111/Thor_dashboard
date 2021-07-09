@@ -62,21 +62,21 @@ export const constantRoutes = [
 
    ]
   },
-  {
-    path: '/chart',
-    component: Layout,
-    redirect: '/chart/table',
-    name: 'record',
-    meta: { title: 'Chart', icon: 'example' },
-    children: [
-      {
-        path: 'index',
-        name: 'Record',
-        component: () => import('@/views/chart/index'),
-        meta: { title: 'Record', icon: 'component' }
-      },
-    ]
-  },
+  // {
+  //   path: '/chart',
+  //   component: Layout,
+  //   redirect: '/chart/table',
+  //   name: 'record',
+  //   meta: { title: 'Chart', icon: 'example' },
+  //   children: [
+  //     {
+  //       path: 'index',
+  //       name: 'Record',
+  //       component: () => import('@/views/chart/index'),
+  //       meta: { title: 'Record', icon: 'component' }
+  //     },
+  //   ]
+  // },
 ]
 
 

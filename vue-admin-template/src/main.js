@@ -39,12 +39,9 @@ Vue.use(ElementUI, { locale })
 
 // using defaults
 Vue.use(VueSSE);
-<<<<<<< HEAD
-=======
+
 
 Vue.directive('permission', permission)
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
-
 Vue.config.productionTip = false
 
 new Vue({

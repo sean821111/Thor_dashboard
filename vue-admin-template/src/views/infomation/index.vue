@@ -1,15 +1,15 @@
 <template>
   <div>
     <p>{{this.$route.query.residentId}}</p>
-    <el-tabs v-model="activeName" type="card">
+    <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
       <el-tab-pane label="個人床位資訊" name="first">
         
         <div v-if="editInfo"><edit-info :resident="resident" @info-mode="changeMode" @reload="reload"/></div>
-        <div v-else><resident-info :resident="resident" @edit-mode="changeMode"/></div>
+        <div v-else><resident-info v-if="isUpdate1" :resident="resident" @edit-mode="changeMode"/></div>
       </el-tab-pane>
 
-      <el-tab-pane label="個別床位事件紀錄" name="second">
-        <div><event-record /></div>
+      <el-tab-pane label="歷史紀錄" name="second">
+        <div><vital-signs-history v-if="isUpdate2" :residentId="this.resident._id"/></div>
       </el-tab-pane>
 
       <!-- <el-tab-pane label="個別紀錄範圍" name="third">個別紀錄範圍</el-tab-pane> -->
@@ -19,7 +19,7 @@
 
 <script>
 import {getResidentInfo} from "@/api/resident"
-import EventRecord from "./component/EventRecord";
+import VitalSignsHistory from "./component/VitalSignsHistory";
 import ResidentInfo from "./component/ResidentInfo";
 import EditInfo from "./component/EditInfo"
 
@@ -33,9 +33,11 @@ export default {
       return statusMap[status];
     },
   },
-  components: { EventRecord, ResidentInfo, EditInfo },
+  components: {ResidentInfo, EditInfo, VitalSignsHistory},
   data() {
     return {
+      isUpdate1: true,
+      isUpdate2: false,
       editInfo: false,
       activeName: 'first',
       resident: {
@@ -51,7 +53,8 @@ export default {
         bedNumber:'',
         remark: null,
         thorDevices: [],
-        pairsDevice: null
+        pairsDevice: null,
+        _id: ''
       }
     };
   },
@@ -60,13 +63,10 @@ export default {
   },
   methods: {
     fetchResident() {
-<<<<<<< HEAD
-=======
       if (this.$route.query.residentId) {
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
         getResidentInfo(this.$route.query.residentId).then((response)=> {
             this.resident = response.data            
-            console.log("resident: " + JSON.stringify(this.resident));
+            console.log("resident: " + JSON.stringify(this.resident._id));
         });
       }
     },
@@ -76,7 +76,18 @@ export default {
     reload() {
       this.editInfo = false;
       this.fetchResident();
-    }
+   
+   },
+   handleClick(tab){
+     if(tab.name=="first"){
+       this.isUpdate1 = true;
+       this.isUpdate2 = false;
+     }else if (tab.name=="second"){
+       this.isUpdate1 = false;
+       this.isUpdate2 = true;
+     }
+     
+   }
   }
 };
 </script>

@@ -38,9 +38,9 @@
 </template>
 
 <script>
-import PanelGroup from './components/PanelGroup'
-import LineChart from './components/LineChart'
-import DateSelect from './components/DateSelect'
+import PanelGroup from './PanelGroup'
+import LineChart from './LineChart'
+import DateSelect from './DateSelect'
 // import BarChart from './components/BarChart'
 import { getResidentVitalSignsRecord, getResidentInfo } from "@/api/resident";
 import { dataTool } from 'echarts/lib/echarts';
@@ -106,6 +106,7 @@ var lineChartData = {
     time: []
   }
 }
+const lineChartTime = []
 
 export default {
   name: 'DashboardChart',
@@ -122,10 +123,17 @@ export default {
       vitalSigns: null,
       isConnected: null,
       ISOdate: undefined,
-      initDateStart: Date.now() - (3600 * 1000 * 24 * 14),
+      lineChartTime: [],
+      initDateStart: Date.now() - (3600 * 1000 * 24 * 7),
       initDateEnd: Date.now(),
       selectType: 'hr'
       
+    }
+  },
+  props: {
+    residentId: {
+      type: String,
+      required: true,
     }
   },
   created(){  
@@ -135,8 +143,17 @@ export default {
   },
   methods: {
     getCurrentRecord(){
-      // this.initDateStart.setTime(this.initDateStart - 3600 * 1000 * 24 * 7);
-      getResidentVitalSignsRecord(this.$route.query.residentId, this.initDateStart, this.initDateEnd).then((response)=> {
+      
+      // initialize chart data
+      lineChartData.hr.val = [];
+      lineChartData.hr.time = [];
+      lineChartData.temp.val = [];
+      lineChartData.temp.time = [];
+      lineChartData.spo2.val = [];
+      lineChartData.spo2.time = [];
+      lineChartData.pi.val = [];
+      lineChartData.pi.time = [];
+      getResidentVitalSignsRecord(this.residentId, this.initDateStart, this.initDateEnd).then((response)=> {
         this.vitalSigns = response.data;
         this.vitalSigns.forEach(element => {
           var hr = element.vitalSigns.hr;
@@ -159,6 +176,8 @@ export default {
           lineChartData.spo2.time.push(dt);
           lineChartData.pi.time.push(dt);
 
+
+          // lineChartTime.push(dt);
         });
       });
 
@@ -182,7 +201,7 @@ export default {
       this.getCurrentRecord();
     },
     getResidentName(){
-      getResidentInfo(this.$route.query.residentId).then((response)=>{
+      getResidentInfo(this.residentId).then((response)=>{
         this.residentName = response.data.info.name;
       });
     },

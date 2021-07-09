@@ -30,6 +30,10 @@ export default {
       type: Object,
       required: true
     },
+    chartTime: {
+      type: Array,
+      required: true
+    },
   },
   data() {
     return {

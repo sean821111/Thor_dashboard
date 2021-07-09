@@ -1,34 +1,6 @@
 <template>
   <div class="app-container">
         <div class="info-container">
-<<<<<<< HEAD
-          <el-row>
-            <span style="float:left;">
-              <h1>{{resident.bedNumber}}床-住民床位資訊編輯</h1>
-            </span>
-            <span style="float:right;">
-              <el-button type="success" @click="save">儲存</el-button>
-              <el-button type="warning" @click="cancel">取消</el-button>
-            </span>
-          </el-row>
-          <el-row :gutter="30">
-            <el-col :span=6>
-              <h2>住民資訊</h2>
-            </el-col>
-            <el-col :span=6>
-              <h2>住民身體狀況</h2>
-            </el-col>
-            <el-col :span=6>
-              <h2>裝置資訊</h2>
-            </el-col>
-          </el-row>
-
-          <el-form
-            class="resident-info"
-            ref="residentData"
-            :model="resident"
-            label-width="100px"
-=======
           
 
           <el-form
@@ -37,7 +9,6 @@
             :rules="rules"
             :model="resident"
             label-width="120px"
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
             size="35"
           >
             <el-row>
@@ -62,11 +33,7 @@
             </el-row>
             <el-row :gutter="30">
               <el-col :span="6">
-<<<<<<< HEAD
-                <el-form-item label="姓名：">
-=======
                 <el-form-item label="姓名：" prop="info.name">
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                   <el-input v-model="resident.info.name" v-show="editInfo" style="width: 100px"></el-input>
                 </el-form-item>
                 <el-form-item label="性別：">
@@ -76,11 +43,7 @@
                   </div>
                 </el-form-item>
 
-<<<<<<< HEAD
-                <el-form-item label="身份證字號:">
-=======
                 <el-form-item label="身份證字號:" prop="info.idNumber">
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                   <el-input v-model="resident.info.idNumber" v-show="editInfo" style="width: 150px"></el-input>
                 </el-form-item>
 
@@ -113,11 +76,7 @@
               </el-col>
               
               <el-col :span="6">
-<<<<<<< HEAD
-                <el-form-item label="床號：">
-=======
                 <el-form-item label="床號：" prop="bedNumber">
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
                   <el-input v-model="resident.bedNumber" v-show="editInfo"></el-input>
                 </el-form-item>
 
@@ -184,9 +143,6 @@ export default {
     return {
       editInfo: true,
       thorDeviceNames: ['null', 'null'],
-<<<<<<< HEAD
-      validThorDeviceNames: ['null']
-=======
       validThorDeviceNames: ['null'],
       rules: {
         'info.name': [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
@@ -196,7 +152,6 @@ export default {
         ],
         bedNumber: [{ required: true, message: '請輸入床號', trigger: 'blur' }]
       }
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
     };
   },
   props: {
@@ -225,23 +180,6 @@ export default {
         console.log('this.validThorDeviceNames: ' + JSON.stringify(this.validThorDeviceNames))
         
       });
-<<<<<<< HEAD
-    },
-    save(){
-      this.thorDeviceNames = this.thorDeviceNames.filter(deviceName => deviceName != 'null'); 
-      let data = {
-        info: this.resident.info,
-        health: this.resident.health,
-        bedNumber: this.resident.bedNumber,
-        remark: this.resident.remark,
-        pairsDeviceName: (this.resident.pairsDevice == null) ? null : this.resident.pairsDevice._id,
-	      thorDeviceNames: this.thorDeviceNames
-      };
-      updateResident(this.resident._id, data).then((response) => {
-        this.$emit("reload");
-      });
-    },
-=======
     },
     save(){
       this.thorDeviceNames = this.thorDeviceNames.filter(deviceName => deviceName != 'null'); 
@@ -265,7 +203,6 @@ export default {
         });
       ;
     },
->>>>>>> 9bcc7f59f6f36a51b98c0be957b5b3a5939c7f12
     cancel(){
       this.$emit("info-mode");
     },

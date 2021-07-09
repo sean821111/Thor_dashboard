@@ -62,10 +62,3 @@ export function getResidentVitalSignsRecord(residentId, start, end){
   //     data: dateRange
   //   })
   // }
-
-  export function getResidentVitalSignsRecord(residentId, start, end){
-    return request({
-    url: 'residents/vital/signs/record/' + residentId + '/' + start + '/' + end, 
-    method: 'get',
-    })
-   }
