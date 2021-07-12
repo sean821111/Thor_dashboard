@@ -5,10 +5,9 @@
         <div class="card-panel-icon-wrapper icon-hr">
           <svg-icon icon-class="cardiogram" class-name="card-panel-icon" />
         </div>
-      <div class="card-panel-description">
-          <div class="card-panel-text">
-            心率 (BPM)
-          </div >
+        <div class="card-panel-description">
+          <div class="card-panel-text">心率</div>
+          <div class="card-panel-text">(BPM)</div>
           <!-- <span class="card-panel-num">{{vitalSigns.hr}}</span> -->
           <!-- <count-to :start-val="0" :end-val="80" :duration="3200" class="card-panel-num" /> -->
         </div>
@@ -20,9 +19,9 @@
           <svg-icon icon-class="celsius" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
-          <div class="card-panel-text">
-            體溫(℃)
-          </div>
+          <div class="card-panel-text">體溫</div>
+          <div class="card-panel-text">(℃)</div>
+
           <!-- <span class="card-panel-num">{{Math.round(vitalSigns.temp*10)/10}}</span> -->
           <!-- <count-to :start-val="0" :end-val="37" :duration="3000" class="card-panel-num" /> -->
         </div>
@@ -34,9 +33,9 @@
           <svg-icon icon-class="oxygen" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
-          <div class="card-panel-text">
-            血氧濃度(%)
-          </div>
+          <div class="card-panel-text">血氧濃度</div>
+          <div class="card-panel-text">(%)</div>
+
           <!-- <span class="card-panel-num">{{vitalSigns.spo2}}</span> -->
           <!-- <count-to :start-val="0" :end-val="99" :duration="3000" class="card-panel-num" /> -->
         </div>
@@ -49,9 +48,9 @@
           <svg-icon icon-class="perfusion" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
-          <div class="card-panel-text">
-            灌注指標(%)
-          </div>
+          <div class="card-panel-text">灌注指標</div>
+          <div class="card-panel-text">(%)</div>
+
           <!-- <span class="card-panel-num">{{Math.round(vitalSigns.pi*100)/100}}</span> -->
           <!-- <count-to :start-val="0" :end-val="10" :duration="3000" class="card-panel-num" /> -->
         </div>
@@ -73,16 +72,15 @@
         </div>
       </div>
     </el-col> -->
-
   </el-row>
 </template>
 
 <script>
-import CountTo from 'vue-count-to'
+import CountTo from "vue-count-to";
 
 export default {
   components: {
-    CountTo
+    CountTo,
   },
   props: {
     // vitalSigns: {
@@ -93,19 +91,18 @@ export default {
   },
   methods: {
     handleSetLineChartData(type) {
-      this.$emit('handleSetLineChartData', type)
-    }
-  }
-}
+      this.$emit("handleSetLineChartData", type);
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
 .card-panel-icon-wrapper:focus {
   background: #c940ab;
   .icon-hr {
-      background: #c940ab;
+    background: #c940ab;
   }
-  
 }
 .panel-group {
   margin-top: 18px;
@@ -122,8 +119,8 @@ export default {
     overflow: hidden;
     color: #666;
     background: #fff;
-    box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);
-    border-color: rgba(0, 0, 0, .05);
+    box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.05);
 
     &:hover {
       .card-panel-icon-wrapper {
@@ -143,13 +140,13 @@ export default {
       }
 
       .icon-pi {
-        background: #34bfa3
+        background: #34bfa3;
       }
       .icon-bp {
-        background: #63e4f5
+        background: #63e4f5;
       }
     }
-   
+
     .icon-hr {
       color: #40c9c6;
     }
@@ -163,7 +160,7 @@ export default {
     }
 
     .icon-pi {
-      color: #34bfa3
+      color: #34bfa3;
     }
 
     .card-panel-icon-wrapper {
@@ -199,7 +196,7 @@ export default {
   }
 }
 
-@media (max-width:550px) {
+@media (max-width: 550px) {
   .card-panel-description {
     display: none;
   }
