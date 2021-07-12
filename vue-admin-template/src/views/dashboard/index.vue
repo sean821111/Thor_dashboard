@@ -23,9 +23,6 @@
       </el-row>
     </div>
     <el-row :gutter="20">
-      <!-- <el-col v-for="device in devices" :key="device.name" :span="6">
-        <device :device="device" @delete-device="handleDeleteDevice" />
-      </el-col> -->
       <el-col v-for="resident in residents" :key="resident.info.idNumber" :span="6">
         <resident :resident="resident" ref="residents" @delete-resident="handleDeleteResident" />
       </el-col>

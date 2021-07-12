@@ -9,10 +9,10 @@
         </span>
       </el-col>
     </el-row>
-
+    
     <panel-group @handleSetLineChartData="handleSetLineChartData" />
     <el-row>
-      <date-select @dateSubmit='dateSubmit'/>
+      <date-select @dateSubmit='dateSubmit' @handleDownload='handleDownload'/>
     </el-row>
     <el-row style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
       <line-chart :chart-data="lineChartData" />
@@ -103,10 +103,26 @@ var lineChartData = {
       areaColor: "#96f1df"
     },
     val: [],
-    time: []
+    time: [],
   }
 }
 const lineChartTime = []
+
+Date.prototype.format = function (fmt) {
+  var o = {
+    "M+": this.getMonth() + 1, //月份
+    "d+": this.getDate(), //日
+    "h+": this.getHours(), //小時
+    "m+": this.getMinutes(), //分
+    "s+": this.getSeconds(), //秒
+    "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+    "S": this.getMilliseconds() //毫秒
+  };
+  if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  for (var k in o)
+  if (new RegExp("(" +  k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" +  o[k]).substr(("" + o[k]).length)));
+  return fmt;
+}
 
 export default {
   name: 'DashboardChart',
@@ -126,8 +142,7 @@ export default {
       lineChartTime: [],
       initDateStart: Date.now() - (3600 * 1000 * 24 * 7),
       initDateEnd: Date.now(),
-      selectType: 'hr'
-      
+      selectType: 'hr', 
     }
   },
   props: {
@@ -210,12 +225,38 @@ export default {
       // this.datetime = new Date.toISOString();
       // this.ISOdate = this.datetime.toISOString();
       // console.log('current datetime: '+ this.datetime.toISOString());
+    },
+    handleDownload() {
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['time', this.selectType]
+        const data = this.combineData(this.lineChartData.time, this.lineChartData.val);
+        const filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + this.selectType;
+        console.log('filename: '+ filename)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: filename,
+          autoWidth: true,
+          bookType: 'csv'
+        })
+      })
+    },
+    combineData(time, val) {
+      var data = []
+      for (var i = 0; i < time.length; i++) {
+
+        data.push([time[i],val[i]])
+        // data += time[i] + ',' + val[i];
+        // if (i != time.length) 
+        //   data += ',';
+      }
+      return data;
     }
   },
-  mounted(){
-      // this.fetchVitalSign();
-      // this.load();
-  },
+  // mounted(){
+  //     // this.fetchVitalSign();
+  //     // this.load();
+  // },
   // cron:[{
   //     time:120000,
   //     method:'fetchVitalSign'
@@ -275,6 +316,5 @@ export default {
     .icon-pi {
       color: #96f1df
     }
-
 
 </style>
