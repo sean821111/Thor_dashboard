@@ -73,6 +73,13 @@
         <el-button type="primary" @click="dateSubmit" style="font-size: 16px"
           >確認</el-button
         >
+        <el-button
+          type="primary"
+          style="font-size: 16px"
+          @click="handleDownload"
+        >
+          Export CSV
+        </el-button>
       </el-col>
     </el-row>
   </div>
@@ -168,6 +175,9 @@ export default {
     },
     showDate() {
       this.isDate = true;
+    },
+    handleDownload() {
+      this.$emit("handleDownload");
     },
   },
 };

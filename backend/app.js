@@ -32,15 +32,14 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-var url = 'http://localhost:9528';
-if (process.env.NODE_ENV == "prod")
-  url = "http://localhost:9526";
 
-console.log('url: '+ url);
-
-app.use(cors({origin: url, credentials: true}));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', url),
+  const allowedOrigins = ['http://localhost:9526', 'http://localhost:9528'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+       res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  // res.header('Access-Control-Allow-Origin', url),
   res.header('Access-Control-Allow-Credentials', true),
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
