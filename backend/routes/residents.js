@@ -531,7 +531,7 @@ router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
                                 "cond": {
                                 "$and": [
                                     { "$gte": [ "$$this.timestamp", start ] },
-                                    { "$lte": [ "$$this.timestamp", end ] }
+                                    { "$lt": [ "$$this.timestamp", end ] }
                                 ]}
                             }
                                 
@@ -606,7 +606,7 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
                                 "cond": {
                                 "$and": [
                                     { "$gte": [ "$$this.timestamp", start ] },
-                                    { "$lte": [ "$$this.timestamp", end ] }
+                                    { "$lt": [ "$$this.timestamp", end ] }
                                 ]}
                             }
                                 
@@ -629,7 +629,7 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
             
         }
         ]);
-        
+
     if (filtered.length > 0) {
         res.status(200).json(filtered[0].output);  
     } else {

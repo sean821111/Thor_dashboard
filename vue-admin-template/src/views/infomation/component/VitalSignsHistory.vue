@@ -13,11 +13,7 @@
     
     <panel-group @handleSetLineChartData="handleSetLineChartData" />
     <el-row>
-<<<<<<< HEAD
-      <date-select @dateSubmit="dateSubmit" />
-=======
       <date-select @dateSubmit='dateSubmit' @handleDownload='handleDownload'/>
->>>>>>> fa45919335da28816f05f7a6e7eefa0aa18dce43
     </el-row>
     <el-row style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px">
       <line-chart :chart-data="lineChartData" />
@@ -28,7 +24,7 @@
       <p>結束日期{{ this.initDateEnd }}</p>
       <p>{{ this.$route.query.residentId }}</p>
       <p>vital signs array {{ lineChartData.val }}</p>
-      <p>time arrry{{ lineChartData.time }}</p>
+      <!-- <p>time arrry{{ lineChartData.time }}</p> -->
     </el-row>
     <!-- <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="8">
@@ -86,15 +82,10 @@ var lineChartData = {
       areaColor: "#96f1df",
     },
     val: [],
-<<<<<<< HEAD
-  },
-};
-=======
     time: [],
   }
 }
 const lineChartTime = []
->>>>>>> fa45919335da28816f05f7a6e7eefa0aa18dce43
 
 Date.prototype.format = function (fmt) {
   var o = {
@@ -124,25 +115,14 @@ export default {
     return {
       residentName: "",
       lineChartData: lineChartData.hr,
-      vitalSigns: null,
+      vitalSignRecords: null,
       isConnected: null,
-<<<<<<< HEAD
       selectType: "hr",
       initDateStart: new Date(new Date().toLocaleDateString()).getTime(),
-      initDateEnd:
-        new Date(new Date().toLocaleDateString()).getTime() +
-        24 * 3600 * 1000 -
-        1,
+      initDateEnd: new Date(new Date().toLocaleDateString()).getTime() + 24 * 3600 * 1000,
       isDate: true,
+      timeline: []
     };
-=======
-      ISOdate: undefined,
-      lineChartTime: [],
-      initDateStart: Date.now() - (3600 * 1000 * 24 * 7),
-      initDateEnd: Date.now(),
-      selectType: 'hr', 
-    }
->>>>>>> fa45919335da28816f05f7a6e7eefa0aa18dce43
   },
   props: {
     residentId: {
@@ -151,9 +131,46 @@ export default {
     },
   },
   created() {
+    
     this.getCurrentRecord();
     // this.testDate();
     this.getResidentName();
+    this.setTimeline();
+  },
+  watch: {
+    vitalSignRecords: function (records) {
+      lineChartData.hr.val = [];
+      lineChartData.temp.val = [];
+      lineChartData.spo2.val = [];
+      lineChartData.pi.val = [];
+
+      for (var i = 0; i < 24 * 60; i++) {
+        lineChartData.hr.val.push("");
+        lineChartData.temp.val.push("");
+        lineChartData.spo2.val.push("");
+        lineChartData.pi.val.push("");
+      }
+      console.log("length of data: " + records.length);
+      records.forEach((element) => {
+        // console.log("test: " + test)
+        // lineChartData.hr.val[test++] = 100 + test * 10;
+        var t = new Date(element.timestamp);
+        const hour = t.getHours();
+        const min = t.getMinutes();
+        console.log("hour: " + hour + " min: " + min)
+        
+        let timeIndex = hour * 60 + min;
+        console.log('timeIndex: ' + timeIndex);
+        var hr = element.vitalSigns.hr;
+        var temp = Math.round(element.vitalSigns.temp * 10) / 10;
+        var spo2 = element.vitalSigns.spo2;
+        var pi = Math.round(element.vitalSigns.temp * 100) / 100;
+        lineChartData.hr.val[timeIndex] = hr;
+        lineChartData.temp.val[timeIndex] = temp;
+        lineChartData.spo2.val[timeIndex] = spo2;
+        lineChartData.pi.val[timeIndex] = pi;
+      });  
+    }
   },
   methods: {
     testDate() {
@@ -166,66 +183,13 @@ export default {
     },
     getCurrentRecord() {
       // initialize chart data
-      lineChartData.hr.val = [];
-      lineChartData.temp.val = [];
-      lineChartData.spo2.val = [];
-      lineChartData.pi.val = [];
-      var endMinute = 24 * 60;
-
-      var init = true;
-      var timestep;
+      
       getResidentVitalSignsRecord(
         this.residentId,
         this.initDateStart,
         this.initDateEnd
       ).then((response) => {
-        this.vitalSigns = response.data;
-        console.log("length of data: " + this.vitalSigns.length);
-        this.vitalSigns.forEach((element) => {
-          var t = new Date(element.timestamp).toLocaleTimeString("chinese", {
-            hour12: false,
-          });
-          t = t.slice(0, 5);
-          var hour = t.slice(0, 3);
-          if (parseInt(hour) == 24) {
-            hour = 0;
-          }
-          var min = t.slice(3, 5);
-          // console.log("record time: " + hour + ":" + min);
-          if (init) {
-            timestep = parseInt(hour) * 60 + parseInt(min);
-            for (var i = 0; i < timestep; i++) {
-              lineChartData.hr.val.push("");
-              lineChartData.temp.val.push("");
-              lineChartData.spo2.val.push("");
-              lineChartData.pi.val.push("");
-            }
-            init = false;
-            console.log("only call me first");
-          } else if (timestep < endMinute) {
-            var currentStep = parseInt(hour) * 60 + parseInt(min);
-            var diff = currentStep - timestep - 1;
-            timestep = currentStep;
-            if (diff != 0) {
-              for (var i = 0; i < diff; i++) {
-                lineChartData.hr.val.push("");
-                lineChartData.temp.val.push("");
-                lineChartData.spo2.val.push("");
-                lineChartData.pi.val.push("");
-              }
-            } else {
-              var hr = element.vitalSigns.hr;
-              var temp = Math.round(element.vitalSigns.temp * 10) / 10;
-              var spo2 = element.vitalSigns.spo2;
-              var pi = Math.round(element.vitalSigns.temp * 100) / 100;
-
-              lineChartData.hr.val.push(hr);
-              lineChartData.temp.val.push(temp);
-              lineChartData.spo2.val.push(spo2);
-              lineChartData.pi.val.push(pi);
-            }
-          }
-        });
+        this.vitalSignRecords = response.data;
       });
     },
     getWeeklyRecord() {},
@@ -234,31 +198,49 @@ export default {
       this.selectType = type;
     },
     dateSubmit(isDate, dateSelect) {
-      lineChartData.hr.val = [];
-      lineChartData.temp.val = [];
-      lineChartData.spo2.val = [];
-      lineChartData.pi.val = [];
-
+      this.isDate = isDate;
       if (isDate) {
         console.log("====== select date from emit: " + dateSelect);
         // Convert date to 00:00 in timestamp
         this.initDateStart = new Date(
           new Date(dateSelect).toLocaleDateString()
         ).getTime();
-        this.initDateEnd =
-          new Date(new Date(dateSelect).toLocaleDateString()).getTime() +
-          24 * 3600 * 1000 -
-          1;
+        this.initDateEnd = this.initDateStart + 24 * 3600 * 1000;
         // get daily record
         this.getCurrentRecord();
       } else {
         console.log("====== select week from emit: " + dateSelect);
       }
+      this.setTimeline();
     },
     getResidentName() {
       getResidentInfo(this.residentId).then((response) => {
         this.residentName = response.data.info.name;
       });
+    },
+    setTimeline() {
+      console.log('this.isDate' + this.isDate);
+      console.log('this.timeline.length' + this.timeline.length);
+      if (this.isDate && this.timeline.length <= 7) {
+        this.timeline = []
+        let date = new Date(this.initDateStart);
+        for (let hour = 0; hour < 24; hour++) {
+          date.setHours(hour);
+          for (let min = 0; min < 60; min++) {
+            date.setMinutes(min);
+            this.timeline.push(date.format("yyyy-MM-dd"));
+          }
+        }
+        console.log('timeline' + this.timeline);
+      } else if (!this.isDate && this.timeline.length > 7) {
+        this.timeline = []
+        let date = new Date(this.initDateStart);
+        for (let day = 0; day < 7; day++) {
+          this.timeline.push(date.format("yyyy-MM-dd"));
+          date.setDate(date.getDate() + 1);
+        }
+        console.log('timeline' + this.timeline);
+      }
     },
     load() {
       // this.timestamp = Math.floor(Date.now()*1000);
@@ -266,18 +248,16 @@ export default {
       // this.ISOdate = this.datetime.toISOString();
       // console.log('current datetime: '+ this.datetime.toISOString());
     },
-<<<<<<< HEAD
-  },
-  mounted() {
-    // this.fetchVitalSign();
-    // this.load();
-  },
-=======
     handleDownload() {
       import('@/vendor/Export2Excel').then(excel => {
         const tHeader = ['time', this.selectType]
-        const data = this.combineData(this.lineChartData.time, this.lineChartData.val);
-        const filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + this.selectType;
+        const data = this.combineData(this.timeline, this.lineChartData.val);
+        let filename = ''
+        if (this.isDate) {
+          filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + this.selectType;
+        } else {
+          filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + new Date(this.initDateEnd).format("yyyy-MM-dd") + '-' + this.selectType;
+        }
         console.log('filename: '+ filename)
         excel.export_json_to_excel({
           header: tHeader,
@@ -300,11 +280,11 @@ export default {
       return data;
     }
   },
-  // mounted(){
-  //     // this.fetchVitalSign();
-  //     // this.load();
-  // },
->>>>>>> fa45919335da28816f05f7a6e7eefa0aa18dce43
+  // mounted() {
+  //   // this.fetchVitalSign();
+  //   // this.load();
+  // }
+  
   // cron:[{
   //     time:120000,
   //     method:'fetchVitalSign'
@@ -356,7 +336,6 @@ export default {
   color: #36a3f7;
 }
 
-<<<<<<< HEAD
 .icon-spo2 {
   color: #f7b5c0;
 }
@@ -364,6 +343,4 @@ export default {
 .icon-pi {
   color: #96f1df;
 }
-=======
->>>>>>> fa45919335da28816f05f7a6e7eefa0aa18dce43
 </style>

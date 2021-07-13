@@ -59,7 +59,7 @@
         </el-date-picker>
       </el-col>
 
-      <el-col :xs="8" :sm="7" :md="5" :lg="5">
+      <el-col :xs="12" :sm="10" :md="8" :lg="8">
         <el-button
           type="primary"
           icon="el-icon-arrow-left"
