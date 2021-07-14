@@ -228,7 +228,7 @@ export default {
           date.setHours(hour);
           for (let min = 0; min < 60; min++) {
             date.setMinutes(min);
-            this.timeline.push(date.format("yyyy-MM-dd"));
+            this.timeline.push(date.format("hh:mm"));
           }
         }
         console.log('timeline' + this.timeline);
