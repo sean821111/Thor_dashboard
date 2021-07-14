@@ -637,4 +637,24 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
     }
 });
 
+var schedule = require('node-schedule');
+
+function scheduleCronstyle(){
+    schedule.scheduleJob('0 0 0 * * *', () => {
+        console.log('scheduleCronstyle:' + new Date());
+        expireTime = new Date() - 3 * 365 * 24 * 60 * 60 * 1000;  // 3 years
+        Resident.updateMany({ 'vitalSignsRecords.0': { $exists: true } },
+            { 
+                $pull: { vitalSignsRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => { 
+                if (err) 
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+    }); 
+}
+
+scheduleCronstyle();
+
 module.exports = router;
