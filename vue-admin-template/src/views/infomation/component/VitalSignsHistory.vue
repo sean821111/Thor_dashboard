@@ -10,20 +10,20 @@
         </span>
       </el-col>
     </el-row>
-    
+
     <panel-group @handleSetLineChartData="handleSetLineChartData" />
     <el-row>
-      <date-select @dateSubmit='dateSubmit' @handleDownload='handleDownload'/>
+      <date-select @dateSubmit="dateSubmit" @handleDownload="handleDownload" />
     </el-row>
     <el-row style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px">
-      <line-chart :chart-data="lineChartData" />
+      <line-chart :chart-data="lineChartData" :isDate="this.isDate" />
     </el-row>
     <el-row>
-      <!-- <p> test {{this.testTime}} </p> -->
+      <!-- <p> test {{this.testTime}} </p>
       <p>起始日期{{ this.initDateStart }}</p>
       <p>結束日期{{ this.initDateEnd }}</p>
       <p>{{ this.$route.query.residentId }}</p>
-      <p>vital signs array {{ lineChartData.val }}</p>
+      <p>vital signs array {{ lineChartData.val }}</p> -->
       <!-- <p>time arrry{{ lineChartData.time }}</p> -->
     </el-row>
     <!-- <el-row :gutter="32">
@@ -53,8 +53,7 @@ var lineChartData = {
       areaColor: "#a8f0ef",
     },
     val: [],
-    weeklyDate: [],
-    isDate: true,
+    timeline: [],
   },
   temp: {
     chartOption: {
@@ -64,6 +63,7 @@ var lineChartData = {
       areaColor: "#f3f8ff",
     },
     val: [],
+    timeline: [],
   },
   spo2: {
     chartOption: {
@@ -73,6 +73,7 @@ var lineChartData = {
       areaColor: "#f7b5c0",
     },
     val: [],
+    timeline: [],
   },
   pi: {
     chartOption: {
@@ -82,10 +83,10 @@ var lineChartData = {
       areaColor: "#96f1df",
     },
     val: [],
-    time: [],
-  }
-}
-const lineChartTime = []
+    timeline: [],
+  },
+};
+const lineChartTime = [];
 
 Date.prototype.format = function (fmt) {
   var o = {
@@ -95,13 +96,21 @@ Date.prototype.format = function (fmt) {
     "m+": this.getMinutes(), //分
     "s+": this.getSeconds(), //秒
     "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-    "S": this.getMilliseconds() //毫秒
+    S: this.getMilliseconds(), //毫秒
   };
-  if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  if (/(y+)/.test(fmt))
+    fmt = fmt.replace(
+      RegExp.$1,
+      (this.getFullYear() + "").substr(4 - RegExp.$1.length)
+    );
   for (var k in o)
-  if (new RegExp("(" +  k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" +  o[k]).substr(("" + o[k]).length)));
+    if (new RegExp("(" + k + ")").test(fmt))
+      fmt = fmt.replace(
+        RegExp.$1,
+        RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length)
+      );
   return fmt;
-}
+};
 
 export default {
   name: "DashboardChart",
@@ -119,9 +128,10 @@ export default {
       isConnected: null,
       selectType: "hr",
       initDateStart: new Date(new Date().toLocaleDateString()).getTime(),
-      initDateEnd: new Date(new Date().toLocaleDateString()).getTime() + 24 * 3600 * 1000,
+      initDateEnd:
+        new Date(new Date().toLocaleDateString()).getTime() + 24 * 3600 * 1000,
       isDate: true,
-      timeline: []
+      timeline: [],
     };
   },
   props: {
@@ -131,7 +141,6 @@ export default {
     },
   },
   created() {
-    
     this.getCurrentRecord();
     // this.testDate();
     this.getResidentName();
@@ -143,34 +152,141 @@ export default {
       lineChartData.temp.val = [];
       lineChartData.spo2.val = [];
       lineChartData.pi.val = [];
+      this.setTimeline();
+      lineChartData.hr.timeline = this.timeline;
+      lineChartData.temp.timeline = this.timeline;
+      lineChartData.spo2.timeline = this.timeline;
+      lineChartData.pi.timeline = this.timeline;
 
-      for (var i = 0; i < 24 * 60; i++) {
-        lineChartData.hr.val.push("");
-        lineChartData.temp.val.push("");
-        lineChartData.spo2.val.push("");
-        lineChartData.pi.val.push("");
+      if (this.isDate) {
+        // Initialize data array for line chart
+        for (var i = 0; i < 24 * 60; i++) {
+          lineChartData.hr.val.push("");
+          lineChartData.temp.val.push("");
+          lineChartData.spo2.val.push("");
+          lineChartData.pi.val.push("");
+        }
+        console.log("length of data: " + records.length);
+        records.forEach((element) => {
+          // console.log("test: " + test)
+          // lineChartData.hr.val[test++] = 100 + test * 10;
+          var t = new Date(element.timestamp);
+          const hour = t.getHours();
+          const min = t.getMinutes();
+
+          let timeIndex = hour * 60 + min;
+          var hr = element.vitalSigns.hr;
+          var temp = Math.round(element.vitalSigns.temp * 10) / 10;
+          var spo2 = element.vitalSigns.spo2;
+
+          var pi = Math.round(element.vitalSigns.temp * 100) / 100;
+          lineChartData.hr.val[timeIndex] = hr;
+          lineChartData.temp.val[timeIndex] = temp;
+          lineChartData.spo2.val[timeIndex] = spo2;
+          lineChartData.pi.val[timeIndex] = pi;
+        });
+      } else {
+        // weekly records
+        // Initialize data array for line chart
+        console.log(
+          "!!!!!!! Week start ~ end date: " +
+            "=>" +
+            this.initDateStart +
+            "~" +
+            this.initDateEnd
+        );
+        var totalHr = [0, 0, 0, 0, 0, 0, 0];
+        var totalTemp = [0, 0, 0, 0, 0, 0, 0];
+        var totalSpo2 = [0, 0, 0, 0, 0, 0, 0];
+        var totalPi = [0, 0, 0, 0, 0, 0, 0];
+        var DataLength = [0, 0, 0, 0, 0, 0, 0];
+
+        records.forEach((element) => {
+          var day = new Date(element.timestamp).getDay();
+
+          var hr = element.vitalSigns.hr;
+          var temp = Math.round(element.vitalSigns.temp * 10) / 10;
+          var spo2 = element.vitalSigns.spo2;
+          var pi = Math.round(element.vitalSigns.temp * 100) / 100;
+
+          DataLength[day] += 1;
+          totalHr[day] += hr;
+          totalTemp[day] += temp;
+          totalSpo2[day] += spo2;
+          totalPi[day] += pi;
+        });
+
+        for (var i = 0; i < 7; i++) {
+          if (DataLength[i] == 0) {
+            lineChartData.hr.val.push("");
+            lineChartData.temp.val.push("");
+            lineChartData.spo2.val.push("");
+            lineChartData.pi.val.push("");
+          } else {
+            lineChartData.hr.val.push(totalHr[i] / DataLength[i]);
+            lineChartData.temp.val.push(totalTemp[i] / DataLength[i]);
+            lineChartData.spo2.val.push(totalSpo2[i] / DataLength[i]);
+            lineChartData.pi.val.push(totalPi[i] / DataLength[i]);
+          }
+        }
+
+        //   for (var i = 0; i < 7; i++) {
+        //     if (i != 0) {
+        //       this.initDateStart =
+        //         new Date(
+        //           new Date(this.initDateStart).toLocaleDateString()
+        //         ).getTime() +
+        //         24 * 3600 * 1000;
+        //     }
+        //     this.initDateEnd =
+        //       new Date(
+        //         new Date(this.initDateStart).toLocaleDateString()
+        //       ).getTime() +
+        //       24 * 3600 * 1000;
+        //     console.log(
+        //       "!!!!!!! Week start ~ end date: " +
+        //         i +
+        //         "=>" +
+        //         this.initDateStart +
+        //         "~" +
+        //         this.initDateEnd
+        //     );
+        //     var hr_total = 0;
+        //     var temp_total = 0;
+        //     var spo2_total = 0;
+        //     var pi_total = 0;
+        //     var DataLength = 0;
+        //     if (new Date(this.initDateStart).getDay() == 4) {
+        //       records.forEach((element) => {
+        //         console.log(
+        //           "===== : " +
+        //             new Date(this.initDateStart) +
+        //             "======: " +
+        //             element.vitalSigns.hr
+        //         );
+        //       });
+        //     }
+        //     records.forEach((element) => {
+        //       DataLength += 1;
+        //       hr_total += element.vitalSigns.hr;
+        //       temp_total += Math.round(element.vitalSigns.temp * 10) / 10;
+        //       spo2_total += element.vitalSigns.spo2;
+        //       pi_total += Math.round(element.vitalSigns.temp * 100) / 100;
+        //     });
+        //     if (DataLength != 0) {
+        //       lineChartData.hr.val.push(hr_total / DataLength);
+        //       lineChartData.temp.val.push(temp_total / DataLength);
+        //       lineChartData.spo2.val.push(spo2_total / DataLength);
+        //       lineChartData.pi.val.push(pi_total / DataLength);
+        //     } else {
+        //       lineChartData.hr.val.push("");
+        //       lineChartData.temp.val.push("");
+        //       lineChartData.spo2.val.push("");
+        //       lineChartData.pi.val.push("");
+        //     }
+        //   }
       }
-      console.log("length of data: " + records.length);
-      records.forEach((element) => {
-        // console.log("test: " + test)
-        // lineChartData.hr.val[test++] = 100 + test * 10;
-        var t = new Date(element.timestamp);
-        const hour = t.getHours();
-        const min = t.getMinutes();
-        console.log("hour: " + hour + " min: " + min)
-        
-        let timeIndex = hour * 60 + min;
-        console.log('timeIndex: ' + timeIndex);
-        var hr = element.vitalSigns.hr;
-        var temp = Math.round(element.vitalSigns.temp * 10) / 10;
-        var spo2 = element.vitalSigns.spo2;
-        var pi = Math.round(element.vitalSigns.temp * 100) / 100;
-        lineChartData.hr.val[timeIndex] = hr;
-        lineChartData.temp.val[timeIndex] = temp;
-        lineChartData.spo2.val[timeIndex] = spo2;
-        lineChartData.pi.val[timeIndex] = pi;
-      });  
-    }
+    },
   },
   methods: {
     testDate() {
@@ -183,7 +299,7 @@ export default {
     },
     getCurrentRecord() {
       // initialize chart data
-      
+
       getResidentVitalSignsRecord(
         this.residentId,
         this.initDateStart,
@@ -192,7 +308,6 @@ export default {
         this.vitalSignRecords = response.data;
       });
     },
-    getWeeklyRecord() {},
     handleSetLineChartData(type) {
       this.lineChartData = lineChartData[type];
       this.selectType = type;
@@ -206,11 +321,16 @@ export default {
           new Date(dateSelect).toLocaleDateString()
         ).getTime();
         this.initDateEnd = this.initDateStart + 24 * 3600 * 1000;
-        // get daily record
-        this.getCurrentRecord();
       } else {
+        this.initDateStart = new Date(
+          new Date(dateSelect).toLocaleDateString()
+        ).getTime();
+        this.initDateEnd = this.initDateStart + 24 * 3600 * 1000 * 7;
+
         console.log("====== select week from emit: " + dateSelect);
       }
+      // get weekly or daily record
+      this.getCurrentRecord();
       this.setTimeline();
     },
     getResidentName() {
@@ -219,81 +339,68 @@ export default {
       });
     },
     setTimeline() {
-      console.log('this.isDate' + this.isDate);
-      console.log('this.timeline.length' + this.timeline.length);
+      // console.log("this.isDate" + this.isDate);
+      // console.log("this.timeline.length" + this.timeline.length);
       if (this.isDate && this.timeline.length <= 7) {
-        this.timeline = []
+        this.timeline = [];
         let date = new Date(this.initDateStart);
         for (let hour = 0; hour < 24; hour++) {
           date.setHours(hour);
           for (let min = 0; min < 60; min++) {
             date.setMinutes(min);
-            this.timeline.push(date.format("yyyy-MM-dd"));
+            this.timeline.push(date.format("hh:mm"));
           }
         }
-        console.log('timeline' + this.timeline);
+        // console.log("timeline" + this.timeline);
       } else if (!this.isDate && this.timeline.length > 7) {
-        this.timeline = []
+        this.timeline = [];
         let date = new Date(this.initDateStart);
         for (let day = 0; day < 7; day++) {
           this.timeline.push(date.format("yyyy-MM-dd"));
           date.setDate(date.getDate() + 1);
         }
-        console.log('timeline' + this.timeline);
+        // console.log("timeline" + this.timeline);
       }
     },
-    load() {
-      // this.timestamp = Math.floor(Date.now()*1000);
-      // this.datetime = new Date.toISOString();
-      // this.ISOdate = this.datetime.toISOString();
-      // console.log('current datetime: '+ this.datetime.toISOString());
-    },
     handleDownload() {
-      import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['time', this.selectType]
+      import("@/vendor/Export2Excel").then((excel) => {
+        const tHeader = ["time", this.selectType];
         const data = this.combineData(this.timeline, this.lineChartData.val);
-        let filename = ''
+        let filename = "";
         if (this.isDate) {
-          filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + this.selectType;
+          filename =
+            new Date(this.initDateStart).format("yyyy-MM-dd") +
+            "-" +
+            this.selectType;
         } else {
-          filename = new Date(this.initDateStart).format("yyyy-MM-dd") + '-' + new Date(this.initDateEnd).format("yyyy-MM-dd") + '-' + this.selectType;
+          filename =
+            new Date(this.initDateStart).format("yyyy-MM-dd") +
+            "-" +
+            new Date(this.initDateEnd).format("yyyy-MM-dd") +
+            "-" +
+            this.selectType;
         }
-        console.log('filename: '+ filename)
+        console.log("filename: " + filename);
         excel.export_json_to_excel({
           header: tHeader,
           data,
           filename: filename,
           autoWidth: true,
-          bookType: 'csv'
-        })
-      })
+          bookType: "csv",
+        });
+      });
     },
     combineData(time, val) {
-      var data = []
+      var data = [];
       for (var i = 0; i < time.length; i++) {
-
-        data.push([time[i],val[i]])
+        data.push([time[i], val[i]]);
         // data += time[i] + ',' + val[i];
-        // if (i != time.length) 
+        // if (i != time.length)
         //   data += ',';
       }
       return data;
-    }
+    },
   },
-  // mounted() {
-  //   // this.fetchVitalSign();
-  //   // this.load();
-  // }
-  
-  // cron:[{
-  //     time:120000,
-  //     method:'fetchVitalSign'
-  // },
-  // {
-  //   time:1000,
-  //   method: 'load'
-
-  // }]
 };
 </script>
 

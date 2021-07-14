@@ -7,20 +7,20 @@ import echarts from "echarts";
 require("echarts/theme/macarons"); // echarts theme
 import resize from "./mixins/resize";
 
-var chartTime = [];
-var cnt = 0;
-for (var h = 0; h < 24; h++) {
-  for (var m = 0; m < 60; m++) {
-    var hour = h;
-    var minute = m;
-    if (h < 10) hour = "0" + hour;
-    if (m < 10) minute = "0" + minute;
+// var chartTime = [];
+// var cnt = 0;
+// for (var h = 0; h < 24; h++) {
+//   for (var m = 0; m < 60; m++) {
+//     var hour = h;
+//     var minute = m;
+//     if (h < 10) hour = "0" + hour;
+//     if (m < 10) minute = "0" + minute;
 
-    var time = hour + ":" + minute;
-    chartTime[cnt] = time;
-    cnt = cnt + 1;
-  }
-}
+//     var time = hour + ":" + minute;
+//     chartTime[cnt] = time;
+//     cnt = cnt + 1;
+//   }
+// }
 
 export default {
   mixins: [resize],
@@ -54,8 +54,8 @@ export default {
   watch: {
     chartData: {
       deep: true,
-      handler(val, time, chartOption) {
-        this.setOptions(val, time, chartOption);
+      handler(val, timeline, chartOption) {
+        this.setOptions(val, timeline, chartOption);
       },
     },
   },
@@ -74,12 +74,11 @@ export default {
   methods: {
     initChart() {
       this.chart = echarts.init(this.$el, "macarons");
-      this.setOptions(this.chartData);
     },
-    setOptions({ val, time, chartOption } = {}) {
+    setOptions({ val, timeline, chartOption } = {}) {
       this.chart.setOption({
         xAxis: {
-          data: chartTime,
+          data: timeline,
           boundaryGap: false,
           axisTick: {
             show: false,

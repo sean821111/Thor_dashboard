@@ -12,12 +12,6 @@
         activeDevice.isConnected ? 'card-title' : 'card-title title-disconnect',
       ]"
     >
-      <i
-        class="el-icon-info"
-        @click="goToInfoPage"
-        style="padding: 6px 6px 0"
-      />
-
       <span
         v-if="
           (activeDevice.vitalSigns.spo2 != NONE) &
@@ -26,10 +20,14 @@
       >
         <svg-icon icon-class="warning" class-name="icon-warning" />
       </span>
-      <span v-if="resident"
-        >{{ resident.bedNumber }} {{ resident.info.name }}</span
-      >
-      <span v-else>Bed #</span>
+
+      <el-button type="info" @click="goToInfoPage" style="font-size: 1.2rem">
+        <i class="el-icon-info" />
+        <span v-if="resident"
+          >{{ resident.bedNumber }} {{ resident.info.name }}</span
+        >
+        <span v-else>Bed #</span>
+      </el-button>
 
       <i
         class="el-icon-delete"
