@@ -107,7 +107,7 @@ router.delete('/:id', authenticated, (req, res, next) => {
                         if (err) {
                             console.log('Device updateMany err: ' + err);
                             next(err);
-                        } else if (result2.n != 0) {
+                        } else if (result2.ok) {
                             res.status(200).end();         
                         } else {
                             res.status(404).end('Device updateMany failed'); 
