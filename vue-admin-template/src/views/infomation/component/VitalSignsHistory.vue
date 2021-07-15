@@ -165,19 +165,25 @@ export default {
       lineChartData.temp.val = [];
       lineChartData.spo2.val = [];
       lineChartData.pi.val = [];
-      this.setTimeline();
-      lineChartData.hr.timeline = this.timeline;
-      lineChartData.temp.timeline = this.timeline;
-      lineChartData.spo2.timeline = this.timeline;
-      lineChartData.pi.timeline = this.timeline;
 
       if (this.isDate) {
         // Initialize data array for line chart
-        for (var i = 0; i < 24 * 60; i++) {
-          lineChartData.hr.val.push("");
-          lineChartData.temp.val.push("");
-          lineChartData.spo2.val.push("");
-          lineChartData.pi.val.push("");
+        for (var h = 0; h < 24; h++) {
+          for (var m = 0; m < 60; m++) {
+            var hour = h;
+            var min = m;
+            if (h < 10) hour = "0" + h;
+            if (m < 10) min = "0" + min;
+            var time = hour + ":" + min;
+            lineChartData.hr.timeline = time;
+            lineChartData.temp.timeline = time;
+            lineChartData.spo2.timeline = time;
+            lineChartData.pi.timeline = time;
+            lineChartData.hr.val.push("");
+            lineChartData.temp.val.push("");
+            lineChartData.spo2.val.push("");
+            lineChartData.pi.val.push("");
+          }
         }
         console.log("length of data: " + records.length);
         records.forEach((element) => {
@@ -204,10 +210,21 @@ export default {
         console.log(
           "!!!!!!! Week start ~ end date: " +
             "=>" +
-            this.initDateStart +
+            new Date(this.initDateStart) +
             "~" +
-            this.initDateEnd
+            new Date(this.initDateEnd)
         );
+        let date = new Date(this.initDateStart);
+        var dateline = [];
+        for (let d = 0; d < 7; d++) {
+          dateline.push(date.format("yyyy-MM-dd"));
+          date.setDate(date.getDate() + 1);
+        }
+        lineChartData.hr.timeline = dateline;
+        lineChartData.temp.timeline = dateline;
+        lineChartData.spo2.timeline = dateline;
+        lineChartData.pi.timeline = dateline;
+
         var totalHr = [0, 0, 0, 0, 0, 0, 0];
         var totalTemp = [0, 0, 0, 0, 0, 0, 0];
         var totalSpo2 = [0, 0, 0, 0, 0, 0, 0];
@@ -250,17 +267,7 @@ export default {
     },
   },
   methods: {
-    testDate() {
-      console.log("------start time:" + this.initDateStart);
-      var dd = (this.initDateStart + 60 * 1000) / 1000;
-      // (new Date(new Date().toLocaleDateString()).getTime() + 60 * 1000) /
-      // 1000;
-      console.log("------step time: " + dd);
-      console.log("------end time:" + this.initDateEnd);
-    },
     getCurrentRecord() {
-      // initialize chart data
-
       getResidentVitalSignsRecord(
         this.residentId,
         this.initDateStart,
@@ -276,7 +283,7 @@ export default {
     dateSubmit(isDate, dateSelect) {
       this.isDate = isDate;
       if (isDate) {
-        console.log("====== select date from emit: " + dateSelect);
+        // console.log("====== select date from emit: " + dateSelect);
         // Convert date to 00:00 in timestamp
         this.initDateStart = new Date(
           new Date(dateSelect).toLocaleDateString()
@@ -288,11 +295,10 @@ export default {
         ).getTime();
         this.initDateEnd = this.initDateStart + 24 * 3600 * 1000 * 7;
 
-        console.log("====== select week from emit: " + dateSelect);
+        // console.log("====== select week from emit: " + dateSelect);
       }
       // get weekly or daily record
       this.getCurrentRecord();
-      this.setTimeline();
     },
     getResidentName() {
       getResidentInfo(this.residentId).then((response) => {
@@ -320,7 +326,7 @@ export default {
           this.timeline.push(date.format("yyyy-MM-dd"));
           date.setDate(date.getDate() + 1);
         }
-        // console.log("timeline" + this.timeline);
+        console.log("week timeline：" + this.timeline);
       }
     },
     handleDownload() {

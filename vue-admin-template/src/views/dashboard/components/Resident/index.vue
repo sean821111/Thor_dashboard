@@ -28,13 +28,15 @@
         >
         <span v-else>Bed #</span>
       </el-button>
-
-      <i
-        class="el-icon-delete"
+      <button
+        class="delete-btn"
+        @click="deleteResident"
         style="float: right; padding: 6px 6px 0"
         v-permission="['admin']"
-        @click="deleteResident"
-      />
+      >
+        <i class="el-icon-delete" />
+      </button>
+      <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
     </div>
 
     <!-- <div class="name" v-if="device.resident">{{ device.resident.info.name }}</div>
@@ -152,10 +154,11 @@
 </template>
 
 <script>
-import { crono } from "vue-crono";
+import ConfirmDialogue from "../ConfirmDialogue.vue";
 
 export default {
   name: "Resident",
+  components: { ConfirmDialogue },
   data() {
     return {
       NONE: -1,
@@ -189,6 +192,24 @@ export default {
     this.resetActiveDevice();
   },
   methods: {
+    async deleteResident() {
+      const ok = await this.$refs.confirmDialogue.show({
+        title: "刪除住民",
+        message: "確定刪除該住民嗎？刪除後將無法復原。",
+        okButton: "刪除",
+      });
+      // If you throw an error, the method will terminate here unless you surround it wil try/catch
+      if (ok) {
+        this.$message({
+          message: "成功刪除住民",
+          type: "warning",
+        });
+        // alert("成功刪除住民！");
+        this.$emit("delete-resident", {
+          id: this.resident._id,
+        });
+      }
+    },
     resetActiveDevice() {
       console.log("resetActiveDevice");
       this.activeDeviceIndex = this.NONE;
@@ -223,11 +244,11 @@ export default {
     //   }
 
     // },
-    deleteResident() {
-      this.$emit("delete-resident", {
-        id: this.resident._id,
-      });
-    },
+    // deleteResident() {
+    //   this.$emit("delete-resident", {
+    //     id: this.resident._id,
+    //   });
+    // },
   },
 };
 </script>
@@ -313,5 +334,17 @@ export default {
 
 .icon-thor:hover {
   color: #36a3f7;
+}
+
+.delete-btn {
+  padding: 0.5em 1em;
+  background-color: #eccfc9;
+  color: #c5391a;
+  border: 2px solid #ea3f1b;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 </style>

@@ -107,7 +107,7 @@ export default {
             barWidth: "25%",
             data: val,
             animationDuration,
-            color: chartOption.color,
+            itemStyle: { color: chartOption.color },
           },
         ],
       });
