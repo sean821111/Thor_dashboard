@@ -21,13 +21,12 @@
         <svg-icon icon-class="warning" class-name="icon-warning" />
       </span>
 
-      <el-button type="info" @click="goToInfoPage" style="font-size: 1.2rem">
-        <i class="el-icon-info" />
-        <span v-if="resident"
-          >{{ resident.bedNumber }} {{ resident.info.name }}</span
-        >
-        <span v-else>Bed #</span>
+      <el-button type="info" @click="goToInfoPage" icon="el-icon-info">
       </el-button>
+      <span v-if="resident"
+        >{{ resident.bedNumber }} {{ resident.info.name }}</span
+      >
+      <span v-else>Bed #</span>
       <button
         class="delete-btn"
         @click="deleteResident"

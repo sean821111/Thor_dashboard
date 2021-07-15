@@ -165,26 +165,29 @@ export default {
       lineChartData.temp.val = [];
       lineChartData.spo2.val = [];
       lineChartData.pi.val = [];
+      lineChartData.hr.timeline = [];
+      lineChartData.temp.timeline = [];
+      lineChartData.spo2.timeline = [];
+      lineChartData.pi.timeline = [];
 
       if (this.isDate) {
         // Initialize data array for line chart
-        for (var h = 0; h < 24; h++) {
-          for (var m = 0; m < 60; m++) {
-            var hour = h;
-            var min = m;
-            if (h < 10) hour = "0" + h;
-            if (m < 10) min = "0" + min;
-            var time = hour + ":" + min;
-            lineChartData.hr.timeline = time;
-            lineChartData.temp.timeline = time;
-            lineChartData.spo2.timeline = time;
-            lineChartData.pi.timeline = time;
+        let date = new Date(this.initDateStart);
+        for (let hour = 0; hour < 24; hour++) {
+          date.setHours(hour);
+          for (let min = 0; min < 60; min++) {
+            date.setMinutes(min);
+            lineChartData.hr.timeline.push(date.format("hh:mm"));
+            lineChartData.temp.timeline.push(date.format("hh:mm"));
+            lineChartData.spo2.timeline.push(date.format("hh:mm"));
+            lineChartData.pi.timeline.push(date.format("hh:mm"));
             lineChartData.hr.val.push("");
             lineChartData.temp.val.push("");
             lineChartData.spo2.val.push("");
             lineChartData.pi.val.push("");
           }
         }
+
         console.log("length of data: " + records.length);
         records.forEach((element) => {
           // console.log("test: " + test)
