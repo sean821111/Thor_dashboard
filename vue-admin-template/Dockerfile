@@ -1,5 +1,5 @@
-FROM node:alpine
+FROM node
 WORKDIR "/app"
 COPY . .
-RUN npm install
+RUN npm install --force
 CMD ["npm", "run", "preview"]

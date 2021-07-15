@@ -6,3 +6,4 @@ Dockerfile*
 .gitignore
 .vscode
 .env*
+package-lock.json
