@@ -1,6 +1,6 @@
 <template>
   <el-row :gutter="30" class="panel-group">
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
+    <el-col :xs="4" :sm="4" :lg="4" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('hr')">
         <div class="card-panel-icon-wrapper icon-hr">
           <svg-icon icon-class="cardiogram" class-name="card-panel-icon" />
@@ -12,7 +12,7 @@
         </div>
       </div>
     </el-col>
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
+    <el-col :xs="4" :sm="4" :lg="4" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('temp')">
         <div class="card-panel-icon-wrapper icon-temp">
           <svg-icon icon-class="celsius" class-name="card-panel-icon" />
@@ -24,7 +24,7 @@
         </div>
       </div>
     </el-col>
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
+    <el-col :xs="4" :sm="4" :lg="4" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('spo2')">
         <div class="card-panel-icon-wrapper icon-spo2">
           <svg-icon icon-class="oxygen" class-name="card-panel-icon" />
@@ -37,7 +37,7 @@
       </div>
     </el-col>
 
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
+    <el-col :xs="4" :sm="4" :lg="4" class="card-panel-col">
       <div class="card-panel" @click="handleSetLineChartData('pi')">
         <div class="card-panel-icon-wrapper icon-pi">
           <svg-icon icon-class="perfusion" class-name="card-panel-icon" />
@@ -61,7 +61,7 @@
           </div>
           <count-to :start-val="0" :end-val="80" :duration="3000" class="card-panel-num" />
           <span class="card-panel-num">/ </span>
-          <count-to :start-val="0" :end-val="120" :duration="3000" class="card-panel-num" />
+          <count-to :start-val ="0" :end-val="120" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col> -->
@@ -178,7 +178,7 @@ export default {
       .card-panel-text {
         line-height: 18px;
         color: rgba(0, 0, 0, 0.45);
-        font-size: 16px;
+        font-size: 18px;
         margin-bottom: 12px;
       }
 
@@ -189,7 +189,7 @@ export default {
   }
 }
 
-@media (max-width: 550px) {
+@media (max-width: 300px) {
   .card-panel-description {
     display: none;
   }

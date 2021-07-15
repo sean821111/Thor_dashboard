@@ -15,8 +15,20 @@
     <el-row>
       <date-select @dateSubmit="dateSubmit" @handleDownload="handleDownload" />
     </el-row>
-    <el-row style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px">
-      <line-chart :chart-data="lineChartData" :isDate="this.isDate" />
+    <el-row
+      v-if="this.isDate"
+      style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px"
+    >
+      <line-chart :chart-data="lineChartData" />
+    </el-row>
+    <el-row
+      v-else
+      :xs="24"
+      :sm="24"
+      :lg="8"
+      style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px"
+    >
+      <bar-chart :chart-data="lineChartData" />
     </el-row>
     <el-row>
       <!-- <p> test {{this.testTime}} </p>
@@ -39,6 +51,7 @@
 <script>
 import PanelGroup from "./PanelGroup";
 import LineChart from "./LineChart";
+import BarChart from "./BarChart";
 import DateSelect from "./DateSelect";
 // import BarChart from './components/BarChart'
 import { getResidentVitalSignsRecord, getResidentInfo } from "@/api/resident";
@@ -118,7 +131,7 @@ export default {
     PanelGroup,
     LineChart,
     DateSelect,
-    // BarChart,
+    BarChart,
   },
   data() {
     return {
@@ -223,68 +236,16 @@ export default {
             lineChartData.spo2.val.push("");
             lineChartData.pi.val.push("");
           } else {
-            lineChartData.hr.val.push(totalHr[i] / DataLength[i]);
-            lineChartData.temp.val.push(totalTemp[i] / DataLength[i]);
-            lineChartData.spo2.val.push(totalSpo2[i] / DataLength[i]);
-            lineChartData.pi.val.push(totalPi[i] / DataLength[i]);
+            var meanHr = Math.round((100 * totalHr[i]) / DataLength[i]) / 100;
+            var meanTemp = Math.round((10 * totalTemp[i]) / DataLength[i]) / 10;
+            var meanSpo2 = Math.round(totalSpo2[i] / DataLength[i]);
+            var meanPi = Math.round((100 * totalPi[i]) / DataLength[i]) / 100;
+            lineChartData.hr.val.push(meanHr);
+            lineChartData.temp.val.push(meanTemp);
+            lineChartData.spo2.val.push(meanSpo2);
+            lineChartData.pi.val.push(meanPi);
           }
         }
-
-        //   for (var i = 0; i < 7; i++) {
-        //     if (i != 0) {
-        //       this.initDateStart =
-        //         new Date(
-        //           new Date(this.initDateStart).toLocaleDateString()
-        //         ).getTime() +
-        //         24 * 3600 * 1000;
-        //     }
-        //     this.initDateEnd =
-        //       new Date(
-        //         new Date(this.initDateStart).toLocaleDateString()
-        //       ).getTime() +
-        //       24 * 3600 * 1000;
-        //     console.log(
-        //       "!!!!!!! Week start ~ end date: " +
-        //         i +
-        //         "=>" +
-        //         this.initDateStart +
-        //         "~" +
-        //         this.initDateEnd
-        //     );
-        //     var hr_total = 0;
-        //     var temp_total = 0;
-        //     var spo2_total = 0;
-        //     var pi_total = 0;
-        //     var DataLength = 0;
-        //     if (new Date(this.initDateStart).getDay() == 4) {
-        //       records.forEach((element) => {
-        //         console.log(
-        //           "===== : " +
-        //             new Date(this.initDateStart) +
-        //             "======: " +
-        //             element.vitalSigns.hr
-        //         );
-        //       });
-        //     }
-        //     records.forEach((element) => {
-        //       DataLength += 1;
-        //       hr_total += element.vitalSigns.hr;
-        //       temp_total += Math.round(element.vitalSigns.temp * 10) / 10;
-        //       spo2_total += element.vitalSigns.spo2;
-        //       pi_total += Math.round(element.vitalSigns.temp * 100) / 100;
-        //     });
-        //     if (DataLength != 0) {
-        //       lineChartData.hr.val.push(hr_total / DataLength);
-        //       lineChartData.temp.val.push(temp_total / DataLength);
-        //       lineChartData.spo2.val.push(spo2_total / DataLength);
-        //       lineChartData.pi.val.push(pi_total / DataLength);
-        //     } else {
-        //       lineChartData.hr.val.push("");
-        //       lineChartData.temp.val.push("");
-        //       lineChartData.spo2.val.push("");
-        //       lineChartData.pi.val.push("");
-        //     }
-        //   }
       }
     },
   },
