@@ -16,7 +16,6 @@ const ResidentSchema = new Schema({
     // Device info
     bedNumber: String,
     pairsDevice: { type: Schema.Types.ObjectId, ref: 'PairsDevice' },
-    // thorDevice: { type: Schema.Types.ObjectId, ref: 'ThorDevice' },
     thorDevices: [ { type: Schema.Types.ObjectId, ref: 'ThorDevice' } ],
     // Remark
     remark: String,
