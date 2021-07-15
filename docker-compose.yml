@@ -30,6 +30,8 @@ services:
     restart: always
     ports:
       - 3000:3000
+    environment:
+      - HOST=http://localhost:9526
     depends_on:
       - mongo
 
@@ -41,5 +43,7 @@ services:
     restart: always
     ports:
       - 9526:9526
+    environment:
+      - VUE_APP_BASE_API=http://localhost:3000/api/v1
     depends_on:
       - backend
