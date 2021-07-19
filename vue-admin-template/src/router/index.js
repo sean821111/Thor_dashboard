@@ -57,10 +57,10 @@ export const constantRoutes = [
       path: 'dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/index'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
+      meta: { title: 'dashboard', icon: 'dashboard' }
     },
 
-   ]
+    ]
   },
   // {
   //   path: '/chart',
@@ -133,27 +133,30 @@ export const asyncRoutes = [
   {
     path: '/infomation',
     component: Layout,
+    hidden: true,
+
     children: [{
       path: 'index',
       name: 'Infomation',
       component: () => import('@/views/infomation/index'),
       meta: { title: 'Infomation', icon: 'icon' }
+
     },
     {
       path: 'edit',
-        component: () => import('@/views/infomation/edit'),
-        name: 'EditResidentInfo',
-        meta: { title: 'Edit Resident Info', noCache: true, activeMenu: '/infomation/index' },
-        hidden: true
+      component: () => import('@/views/infomation/edit'),
+      name: 'EditResidentInfo',
+      meta: { title: 'Edit Resident Info', noCache: true, activeMenu: '/infomation/index' },
+      hidden: true
     },
     {
       path: 'addRes',
-        component: () => import('@/views/infomation/addRes'),
-        name: 'AddResidentInfo',
-        meta: { title: 'AddResidentInfo', noCache: true, activeMenu: '/infomation/addRes' },
-        hidden: true
+      component: () => import('@/views/infomation/addRes'),
+      name: 'AddResidentInfo',
+      meta: { title: 'AddResidentInfo', noCache: true, activeMenu: '/infomation/addRes' },
+      hidden: true
     }
-   ]
+    ]
   },
 
 

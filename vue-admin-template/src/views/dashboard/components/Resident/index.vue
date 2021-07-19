@@ -22,11 +22,12 @@
       </span>
 
       <el-button type="info" @click="goToInfoPage" icon="el-icon-info">
+        <span v-if="resident"
+          >{{ resident.bedNumber }} {{ resident.info.name }}</span
+        >
+        <span v-else>Bed #</span>
       </el-button>
-      <span v-if="resident"
-        >{{ resident.bedNumber }} {{ resident.info.name }}</span
-      >
-      <span v-else>Bed #</span>
+
       <button
         class="delete-btn"
         @click="deleteResident"
@@ -145,7 +146,7 @@
           <svg-icon icon-class="user" class-name="connect-panel" />
         </div>
         <div v-else>
-          <svg-icon icon-class="no-wifi" class-name="connect-panel" />
+          <svg-icon icon-class="ble_disconected" class-name="connect-panel" />
         </div>
       </el-col>
     </el-row>
