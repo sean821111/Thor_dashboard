@@ -31,6 +31,16 @@
           style="font-szie: 18px; font-weight: bold"
           >日</el-button
         >
+        <el-button
+          type="primary"
+          icon="el-icon-arrow-left"
+          @click="last"
+        ></el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-arrow-right"
+          @click="next"
+        ></el-button>
       </el-col>
       <el-col
         :xs="10"
@@ -60,16 +70,6 @@
       </el-col>
 
       <el-col :xs="12" :sm="10" :md="8" :lg="8">
-        <el-button
-          type="primary"
-          icon="el-icon-arrow-left"
-          @click="last"
-        ></el-button>
-        <el-button
-          type="primary"
-          icon="el-icon-arrow-right"
-          @click="next"
-        ></el-button>
         <el-button type="primary" @click="dateSubmit" style="font-size: 16px"
           >確認</el-button
         >
@@ -78,7 +78,7 @@
           style="font-size: 16px"
           @click="handleDownload"
         >
-          Export CSV
+          匯出資料
         </el-button>
       </el-col>
     </el-row>
@@ -141,9 +141,11 @@ export default {
         nextDay.setDate(nextDay.getDate() + 1);
         this.dateSelect = nextDay;
         console.log("next date select: " + this.dateSelect);
+        this.dateSubmit();
       } else {
         this.dateSelect = this.getSunday(this.dateSelect, "next");
         console.log("next week select: " + new Date(this.dateSelect));
+        this.dateSubmit();
       }
     },
     last() {
@@ -157,9 +159,11 @@ export default {
         lastDay.setDate(lastDay.getDate() - 1);
         this.dateSelect = lastDay;
         console.log("last date select: " + this.dateSelect);
+        this.dateSubmit();
       } else {
         this.dateSelect = this.getSunday(this.dateSelect, "last");
         console.log("last week select: " + new Date(this.dateSelect));
+        this.dateSubmit();
       }
     },
     getSunday(d, select) {
