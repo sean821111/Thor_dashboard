@@ -44,6 +44,7 @@
           end-placeholder="结束日期"
           value-format="timestamp"
           :picker-options="pickerOptions2"
+          @click="dateSubmit"
         >
         </el-date-picker>
       </el-col>

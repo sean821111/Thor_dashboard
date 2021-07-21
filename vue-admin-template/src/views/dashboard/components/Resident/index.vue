@@ -21,12 +21,13 @@
         <svg-icon icon-class="warning" class-name="icon-warning" />
       </span>
 
-      <el-button type="info" @click="goToInfoPage" icon="el-icon-info">
+      <el-button type="info" @click="goToInfoPage">
+        <span v-if="resident"
+          >{{ resident.bedNumber }} {{ resident.info.name }}</span
+        >
+        <span v-else>Bed #</span>
       </el-button>
-      <span v-if="resident"
-        >{{ resident.bedNumber }} {{ resident.info.name }}</span
-      >
-      <span v-else>Bed #</span>
+
       <button
         class="delete-btn"
         @click="deleteResident"
@@ -141,11 +142,18 @@
         </div> -->
       </el-col>
       <el-col :span="6">
-        <div v-if="activeDevice.isConnected">
+        <div
+          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr == None"
+        >
+          <svg-icon icon-class="ble_connected" class-name="connect-panel" />
+        </div>
+        <div
+          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != None"
+        >
           <svg-icon icon-class="user" class-name="connect-panel" />
         </div>
         <div v-else>
-          <svg-icon icon-class="no-wifi" class-name="connect-panel" />
+          <svg-icon icon-class="ble_disconected" class-name="connect-panel" />
         </div>
       </el-col>
     </el-row>

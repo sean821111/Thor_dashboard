@@ -8,7 +8,9 @@
         circle
         @click="handleAddDevice"
       /> -->
-      <el-button type="success" @click="addResident" v-permission="['admin']">新增住民</el-button>
+      <el-button type="success" @click="addResident" v-permission="['admin']"
+        >新增住民</el-button
+      >
       <el-row>
         <!-- use keyup instead of keydown, only my computer can't use -->
         <el-input
@@ -23,8 +25,19 @@
       </el-row>
     </div>
     <el-row :gutter="20">
-      <el-col v-for="resident in residents" :key="resident.info.idNumber" :span="6">
-        <resident :resident="resident" ref="residents" @delete-resident="handleDeleteResident" />
+      <el-col
+        v-for="resident in residents"
+        :key="resident.info.idNumber"
+        :xs="15"
+        :sm="10"
+        :md="10"
+        :lg="6"
+      >
+        <resident
+          :resident="resident"
+          ref="residents"
+          @delete-resident="handleDeleteResident"
+        />
       </el-col>
     </el-row>
   </div>
@@ -42,7 +55,7 @@ let sseClient;
 export default {
   name: "Dashboard",
   components: {
-    Resident
+    Resident,
   },
   data() {
     return {
@@ -68,15 +81,15 @@ export default {
   },
   mounted() {
     sseClient = this.$sse.create({
-      url: process.env.VUE_APP_BASE_API + '/device/update',
-      format: 'json',
+      url: process.env.VUE_APP_BASE_API + "/device/update",
+      format: "json",
       polyfill: true,
       withCredentials: false,
     });
 
     // Catch any errors (ie. lost connections, etc.)
-    sseClient.on('error', (e) => {
-      console.error('lost connection or failed to parse!', e);
+    sseClient.on("error", (e) => {
+      console.error("lost connection or failed to parse!", e);
 
       // If this error is due to an unexpected disconnection, EventSource will
       // automatically attempt to reconnect indefinitely. You will _not_ need to
@@ -84,11 +97,12 @@ export default {
     });
 
     // Handle messages without a specific event
-    sseClient.on('message', this.handleMessage);
+    sseClient.on("message", this.handleMessage);
 
-    sseClient.connect()
-      .then(sse => {
-        console.log('We\'re connected!');
+    sseClient
+      .connect()
+      .then((sse) => {
+        console.log("We're connected!");
 
         // Unsubscribes from event-less messages after 7 seconds
         // setTimeout(() => {
@@ -99,7 +113,7 @@ export default {
       .catch((err) => {
         // When this error is caught, it means the initial connection to the
         // events server failed.  No automatic attempts to reconnect will be made.
-        console.error('Failed to connect to server', err);
+        console.error("Failed to connect to server", err);
       });
   },
   methods: {
@@ -115,7 +129,7 @@ export default {
       deleteResident(id).then((response) => {
         console.log(response);
         this.residents = this.residents.filter(
-          (resident) => (resident._id !== id)
+          (resident) => resident._id !== id
         );
       });
     },
@@ -125,7 +139,8 @@ export default {
 
       var result = this.residents.filter(
         (resident) =>
-          resident.info.name === this.search || resident.bedNumber === this.search
+          resident.info.name === this.search ||
+          resident.bedNumber === this.search
       );
       if (result.length != this.residents.length) {
         this.residents = result;
@@ -160,15 +175,15 @@ export default {
       return { device: null, index: -1, deviceIndex: -1};
     },
     handleMessage(message) {
-      console.warn('Received a message w/o an event!', message);
+      console.warn("Received a message w/o an event!", message);
       if (message != "initial") {
-        console.log('Received a json');
+        console.log("Received a json");
         JSON.parse(JSON.stringify(message));
       
         let result = this.findResidentDevice(message.name);
         if (result.device) {
-          if ('isConnected' in message) {
-            console.log('isConnected');
+          if ("isConnected" in message) {
+            console.log("isConnected");
             result.device.isConnected = message.isConnected;
             if (result.deviceIndex == -1) { // Pairs device
               if (!message.isConnected) {
@@ -201,12 +216,11 @@ export default {
             this.residents[result.index].thorDevices.splice(result.deviceIndex, 1);
           }
         }
-      } 
+      }
     },
-    addResident(){
-      this.$router.push({ path: this.redirect || "/infomation/addRes"});
-    }
-
+    addResident() {
+      this.$router.push({ path: this.redirect || "/infomation/addRes" });
+    },
   },
   // mounted(){
   //     this.fetchDeviceData();
