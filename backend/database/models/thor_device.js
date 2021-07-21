@@ -4,6 +4,9 @@ const Schema = mongoose.Schema;
 const ThorDeviceSchema = new Schema({
     name: String,
     address: String,
+    isConnected: Boolean,
+    battery: Number,
+    resident: { type: Schema.Types.ObjectId, ref: 'Resident' },
     vitalSigns: {
         temp: Number,
         hr: Number,
@@ -11,9 +14,7 @@ const ThorDeviceSchema = new Schema({
         pi: Number,
         sbp: Number,
         dbp: Number
-    },
-    isConnected: Boolean,
-    resident: { type: Schema.Types.ObjectId, ref: 'Resident' }
+    }
 });
 
 module.exports = mongoose.model('ThorDevice', ThorDeviceSchema);

@@ -20,14 +20,20 @@ const ResidentSchema = new Schema({
     // Remark
     remark: String,
 
-    sleepRecords: [ {
-        day: Date,
-        records: []  // record data format { date: Date, event: Number }
-    } ],
     vitalSignsRecords: [ {
         day: Date,
         records: []  // record data format { date: Date, vitalSigns: Object }
     } ],
+
+    rawDataRecords: [ { 
+        day: Date,
+        records: []    // record data format { date: Date, rawData: [] }
+    }],
+
+    sleepRecords: [ {
+        day: Date,
+        records: []    // record data format { date: Date, event: Number }
+    } ]
 });
 
 module.exports = mongoose.model('Resident', ResidentSchema);

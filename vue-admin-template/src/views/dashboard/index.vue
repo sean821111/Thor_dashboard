@@ -140,40 +140,62 @@ export default {
       }
     },
     findResidentDevice(deviceName) {
-      var device = null;
-      for (var i = 0; i < this.residents.length; i++) {
-        let resident = this.residents[i];
-        for (var j = 0; j < resident.thorDevices.length; j++) {
-          if (resident.thorDevices[j].name === deviceName) {
-            device = resident.thorDevices[j];
-            return { device: device, index: i, deviceIndex: j};
+      if (deviceName.includes('T2-03')) {
+        for (var i = 0; i < this.residents.length; i++) {
+          let resident = this.residents[i];
+          for (var j = 0; j < resident.thorDevices.length; j++) {
+            if (resident.thorDevices[j].name === deviceName) {
+              return { device: resident.thorDevices[j], index: i, deviceIndex: j};
+            }
+          }
+        }
+      } else if (deviceName.includes('Pairs')) {
+        for (var i = 0; i < this.residents.length; i++) {
+          let resident = this.residents[i];
+          if (resident.pairsDevice && resident.pairsDevice.name === deviceName) {
+            return { device: resident.pairsDevice, index: i, deviceIndex: -1};
           }
         }
       }
-      return { device: device, index: -1, deviceIndex: -1};
+      return { device: null, index: -1, deviceIndex: -1};
     },
     handleMessage(message) {
       console.warn('Received a message w/o an event!', message);
       if (message != "initial") {
         console.log('Received a json');
         JSON.parse(JSON.stringify(message));
-        // let device = this.devices.find(element => element.name === message.name);
+      
         let result = this.findResidentDevice(message.name);
         if (result.device) {
           if ('isConnected' in message) {
             console.log('isConnected');
             result.device.isConnected = message.isConnected;
-            if (message.isConnected) {
-              if (this.$refs.residents[result.index].getActiveDeviceIndex() == -1)
-                this.$refs.residents[result.index].resetActiveDevice();
+            if (result.deviceIndex == -1) { // Pairs device
+              if (!message.isConnected) {
+                this.$refs.residents[result.index].clearEvent();
+              }
             } else {
-              if (this.$refs.residents[result.index].getActiveDeviceIndex() == result.deviceIndex)
-                this.$refs.residents[result.index].resetActiveDevice();
-              this.$refs.residents[result.index].clearVitalSigns(result.deviceIndex);
+              if (message.isConnected) {
+                if (this.$refs.residents[result.index].getActiveDeviceIndex() == -1)
+                  this.$refs.residents[result.index].resetActiveDevice();
+              } else {
+                if (this.$refs.residents[result.index].getActiveDeviceIndex() == result.deviceIndex)
+                  this.$refs.residents[result.index].resetActiveDevice();
+                this.$refs.residents[result.index].clearVitalSigns(result.deviceIndex);
+              }
             }
+          } else if ('battery' in message) {
+            console.log('battery');
+            result.device.battery = message.battery;
           } else if ('vitalSigns' in message) {
             console.log('vitalSigns');
             result.device.vitalSigns = message.vitalSigns;
+          } else if ('rawData' in message) {
+            console.log('rawData');
+            result.device.rawData = message.rawData;
+          } else if ('sleepEvent' in message) {
+            console.log('sleepEvent');
+            result.device.sleepEvent = message.sleepEvent;
           } else if ('resident' in message) {
             console.log('resident');
             this.residents[result.index].thorDevices.splice(result.deviceIndex, 1);

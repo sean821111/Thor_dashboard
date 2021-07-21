@@ -3,9 +3,15 @@ const Schema = mongoose.Schema;
 
 const PairsDeviceSchema = new Schema({
     name: String,
-    rawData: [ Number ],
+    address: String,
     isConnected: Boolean,
-    resident: { type: Schema.Types.ObjectId, ref: 'Resident' }
+    battery: Number,
+    resident: { type: Schema.Types.ObjectId, ref: 'Resident' },
+    rawData: [ Number ],
+    sleepEvent: { 
+        timestamp: Date,
+        event: Number,
+    }
 });
 
 module.exports = mongoose.model('PairsDevice', PairsDeviceSchema);
