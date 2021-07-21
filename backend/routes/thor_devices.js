@@ -14,13 +14,14 @@ router.post('/add', async (req, res, next) => {
             res.status(403).end('Device already exists');
         } else {
             req.body['isConnected'] = false;
+            req.body['battery'] = -1;
+            req.body['resident'] = null;
             req.body['vitalSigns'] = {
                 temp: -1,
                 hr: -1,
                 spo2: -1,
                 pi: -1
             };
-            req.body['resident'] = null;
             new ThorDevice(req.body).save();
             res.status(200).end();
         }
@@ -86,6 +87,7 @@ router.put('/connection/state/:deviceName', (req, res, next) => {
         isConnected: req.body.isConnected
     }
     if (!req.body.isConnected) {
+        update['battery'] = -1;
         update['vitalSigns'] = {
             temp: -1,
             hr: -1,
@@ -103,6 +105,26 @@ router.put('/connection/state/:deviceName', (req, res, next) => {
                 var message = {
                     name: req.params.deviceName,
                     isConnected: req.body.isConnected
+                }
+                deviceUpdate.sse.send(message);
+                res.status(200).end();
+            } else {
+                res.status(404).end('Device not found');
+            }
+        });
+});
+
+router.put('/battery/:deviceName', (req, res, next) => {
+    ThorDevice.updateOne({ name: req.params.deviceName }, 
+        { $set: { battery: req.body.battery } },
+        (err, result) => {
+            if (err) {
+                next(err);
+            } else if (result.n != 0) {
+                console.log(result);
+                var message = {
+                    name: req.params.deviceName,
+                    battery: req.body.battery
                 }
                 deviceUpdate.sse.send(message);
                 res.status(200).end();

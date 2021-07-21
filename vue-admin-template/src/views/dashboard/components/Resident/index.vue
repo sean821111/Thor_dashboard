@@ -171,14 +171,16 @@ export default {
       NONE: -1,
       SPO2_THRESH: 90,
       isConnected: true,
+      battery: -1,
       initVitalSigns: null,
       activeDevice: {
         vitalSigns: null,
         name: null,
         address: null,
-        isConnected: false,
+        isConnected: false
       },
       activeDeviceIndex: null,
+      initSleepEvent: null
     };
   },
   props: {
@@ -186,14 +188,18 @@ export default {
       type: Object,
       default: null,
       required: true,
-    },
+    }
   },
   created() {
     this.initVitalSigns = {
       temp: this.NONE,
       hr: this.NONE,
       spo2: this.NONE,
-      pi: this.NONE,
+      pi: this.NONE
+    };
+    this.initSleepEvent = {
+      timestamp: null,
+      event: this.NONE
     };
     this.activeDevice.vitalSigns = this.initVitalSigns;
     this.resetActiveDevice();
@@ -235,6 +241,10 @@ export default {
       console.log("clearVitalSigns");
       this.resident.thorDevices[index].vitalSigns = this.initVitalSigns;
     },
+    clearSleepEvent() {
+      console.log("clearSleepEvent");
+      this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
+    },
     goToInfoPage() {
       //if (this.device.resident) {
       this.$router.push({
@@ -242,7 +252,7 @@ export default {
         query: { residentId: this.resident._id },
       });
       //}
-    },
+    }
     // goRecordPage(){
 
     //   if (this.device.isConnected){
@@ -256,7 +266,7 @@ export default {
     //     id: this.resident._id,
     //   });
     // },
-  },
+  }
 };
 </script>
 

@@ -26,16 +26,6 @@ router.post('/add', authenticated, async (req, res, next) => {
         return res.status(404).end('Pairs device not found'); 
     delete data['pairsDeviceName'];
 
-    // data['thorDevice'] = null;
-    // if (thorDevice) {
-    //     if (thorDevice.resident == null) 
-    //         data['thorDevice'] = thorDevice._id;
-    //     else
-    //         return res.status(403).end('Thor device already bind'); 
-    // } else if (data.thorDeviceName)
-    //     return res.status(404).end('Thor device not found');  
-    // delete data['thorDeviceName'];
-
     data['thorDevices'] = []
     if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
         for (var i = 0; i < thorDevices.length; ++i)
@@ -64,15 +54,15 @@ router.post('/add', authenticated, async (req, res, next) => {
             if (pairsDevice) {
                 pairsDevice.resident = resident._id;
                 pairsDevice.save();
-                sse.send(pairsDevice.resident.toString(), 'BIND_PAIRS_DEVICE', pairsDevice.address);
+                var message = {
+                    name: pairsDevice.name,
+                    resident: {
+                        _id: resident._id,
+                    }
+                }
+                deviceUpdate.sse.send(message);
             }
 
-            // if (thorDevice) {
-            //     thorDevice.resident = resident._id;
-            //     thorDevice.save();
-            //     sse.send(thorDevice.resident.toString(), 'BIND_THOR_DEVICE', thorDevice.address);
-            // }
-            
             for (var i = 0; i < thorDevices.length; i++) {
                 console.log("Bind device: " + thorDevices[i].name);
                 thorDevices[i].resident = resident._id;
@@ -80,12 +70,8 @@ router.post('/add', authenticated, async (req, res, next) => {
                 var message = {
                     name: thorDevices[i].name,
                     resident: {
-                        info: {
-                          name: resident.info.name
-                        },
                         _id: resident._id,
-                        bedNumber: resident.bedNumber
-                      }
+                    }
                 }
                 deviceUpdate.sse.send(message);
             }
@@ -104,13 +90,28 @@ router.delete('/:id', authenticated, (req, res, next) => {
                 ThorDevice.updateMany({ resident: req.params.id }, 
                     { $set: { resident: null } }, 
                     (err, result2) => {
+                        console.log(result2);
                         if (err) {
-                            console.log('Device updateMany err: ' + err);
+                            console.log('ThorDevice updateMany err: ' + err);
                             next(err);
                         } else if (result2.ok) {
                             res.status(200).end();         
                         } else {
-                            res.status(404).end('Device updateMany failed'); 
+                            res.status(404).end('ThorDevice updateMany failed'); 
+                        }
+                    }); 
+
+                PairsDevice.updateOne({ resident: req.params.id }, 
+                    { $set: { resident: null } }, 
+                    (err, result2) => {
+                        console.log(result2);
+                        if (err) {
+                            console.log('PairsDevice updateOne err: ' + err);
+                            next(err);
+                        } else if (result2.ok) {
+                            res.status(200).end();         
+                        } else {
+                            res.status(404).end('PairsDevice updateOne failed'); 
                         }
                     }); 
             } else {
@@ -153,11 +154,7 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
             var message = {
                 name: newPairsDevice.name,
                 resident: {
-                    info: {
-                      name: resident.info.name
-                    },
                     _id: resident._id,
-                    bedNumber: resident.bedNumber
                   }
             }
             deviceUpdate.sse.send(message);
@@ -186,34 +183,6 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
         }
     }
 
-    // let newThorDevice = await ThorDevice.findOne({ name: data.thorDeviceName });
-    // if (newThorDevice) {
-    //     if (newThorDevice.resident == null) {
-    //         // Bind a new device.
-    //         update['thorDevice'] = newThorDevice._id;
-    //         newThorDevice.resident = resident._id; 
-    //         newThorDevice.save();
-    //         sse.send(newThorDevice.resident.toString(), 'BIND_THOR_DEVICE', newThorDevice.address);
-    //     } else if (newThorDevice.resident.equals(resident._id)) {
-    //         update['thorDevice'] = newThorDevice._id;
-    //     } else {
-    //         return res.status(403).end('Thor device already bind');
-    //     }
-    // } else if (data.thorDeviceName) {
-    //     return res.status(404).end('Thor device not found');
-    // }
-    
-    // if (resident.thorDevice) {
-    //     let oldThorDevice = await ThorDevice.findOne({ _id: resident.thorDevice });
-    //     if (oldThorDeviceame != data.thorDeviceName) {
-    //         // Unbind device
-    //         oldThorDevice.resident = null;
-    //         oldThorDevice.save();
-    //         if (data.thorDeviceName == null)
-    //             sse.send(null, 'UNBIND_THOR_DEVICE', oldThorDevice.address);
-    //     }
-    // }
-
     let newThorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
     update['thorDevices'] = [];
     if (data.thorDeviceNames.length > 0 && newThorDevices.length != data.thorDeviceNames.length) {
@@ -236,11 +205,7 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
             var message = {
                 name: newThorDevice.name,
                 resident: {
-                    info: {
-                      name: resident.info.name
-                    },
                     _id: resident._id,
-                    bedNumber: resident.bedNumber
                   }
             }
             deviceUpdate.sse.send(message);
@@ -282,9 +247,8 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
 
 router.get('/info/:id', authenticated, (req, res, next) => {
     Resident.findOne({ _id: req.params.id }, '-__v -sleepRecords -vitalSignsRecords')
-        .populate('pairsDevice', 'name isConnected _id')
-        // .populate('thorDevice', 'name isConnected _id')
-        .populate('thorDevices', 'name isConnected _id')
+        .populate('pairsDevice', '-__v')
+        .populate('thorDevices', '-__v')
         .exec((err, resident) => {
             if (err) {
                 console.log('Resident findOne err: ' + err);
@@ -303,9 +267,8 @@ router.get('/info/:id', authenticated, (req, res, next) => {
 router.get('/list', authenticated, (req, res, next) => {
 
     Resident.find({}, '-__v -sleepRecords -vitalSignsRecords')
-        .populate('pairsDevice', 'name isConnected _id')
-        // .populate('thorDevice', 'name isConnected _id')
-        .populate('thorDevices', 'name isConnected vitalSigns _id')
+        .populate('pairsDevice', '-__v')
+        .populate('thorDevices', '-__v')
         .exec((err, residents) => {
             if (err) {
                 console.log('Resident findOne err: ' + err);
@@ -321,62 +284,242 @@ router.get('/list', authenticated, (req, res, next) => {
     );
 });
 
-
-router.put('/sleep/record/:deviceName', (req, res, next) => {
+router.put('/raw/data/record/:id', (req, res, next) => {
     let timestamp = new Date(req.body.timestamp * 1000);
     let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
 
-    PairsDevice.findOne({ name: req.params.deviceName }, (err, device) => {
-        if (err) {
-            next(err);
-        } else if (device) {
-            console.log(device)
-            if (device._id)
-            {
-                Resident.updateOne({ pairsDevice: device._id, 'sleepRecords.day': { "$ne": today } }, 
-                    { $push: { sleepRecords: {day: today} } },
-                    (err, result) => {
-                        if (err) {
-                            console.log('Resident updateOne err: ' + err);
-                            return next(err);   
-                        } else if (result.n != 0) {
-                            console.log("Resident update result: ", result);
-                        }
-                        else {
-                            console.log("Resident update failed: ", result);
-                            // return res.status(404).end(); 
-                        }
-                    }
-                );
-
-                Resident.updateOne({ pairsDevice: device._id, 'sleepRecords.day': today }, 
-                    {
-                        $push: { 'sleepRecords.$.records': { timestamp: timestamp, event: req.body.event } }
-                    },
-                    (err, result) => {
-                        if (err) {
-                            console.log('Resident update err: ' + err);
-                            next(err);   
-                        } else if (result.n != 0) {
-                            console.log("Resident2 update result: ", result);
-                            res.status(200).end();   
-                        }
-                        else {
-                            console.log("Residen2 update failed: ", result);
-                            res.status(404).end(); 
-                        }
-                    }
-                );
+    // Create today record array if not exist.
+    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': { "$ne": today } }, 
+        { $push: { rawDataRecords: {day: today} } },
+        (err, result) => {
+            if (err) {
+                console.log('Resident updateOne err: ' + err);
+                return next(err);   
+            } else if (result.n != 0) {
+                console.log("Resident update result: ", result);
             } else {
-                res.status(404).end("Device not bind resident"); 
+                console.log("Resident update failed: ", result);
+                // return res.status(404).end(); 
             }
-        } else {
-            res.status(404).end('Device not found');
         }
-    });
+    );
+
+    
+
+    // Insert record object in today record array.
+    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today }, 
+        {
+            $push: { 'rawDataRecords.$.records': { timestamp: timestamp, rawData: req.body.rawData } }
+        },
+        (err, result) => {
+            if (err) {
+                console.log('Resident update err: ' + err);
+                next(err);   
+            } else if (result.n != 0) {
+                console.log("Resident2 update result: ", result);
+                res.status(200).end();   
+            }
+            else {
+                console.log("Residen2 update failed: ", result);
+                res.status(404).end('Resident not found'); 
+            }
+        }
+    );
 });
 
-router.get('/sleep/record/:id', authenticated, async (req, res, next) => {
+
+router.put('/sleep/record/:id', (req, res, next) => {
+    let timestamp = new Date(req.body.timestamp * 1000);
+    let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
+
+    // Create today record array if not exist.
+    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': { "$ne": today } }, 
+        { $push: { sleepRecords: {day: today} } },
+        (err, result) => {
+            if (err) {
+                console.log('Resident updateOne err: ' + err);
+                return next(err);   
+            } else if (result.n != 0) {
+                console.log("Resident update result: ", result);
+            } else {
+                console.log("Resident update failed: ", result);
+                // return res.status(404).end(); 
+            }
+        }
+    );
+
+    
+
+    // Insert record object in today record array.
+    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today }, 
+        {
+            $push: { 'sleepRecords.$.records': { timestamp: timestamp, event: req.body.event } }
+        },
+        (err, result) => {
+            if (err) {
+                console.log('Resident update err: ' + err);
+                next(err);   
+            } else if (result.n != 0) {
+                console.log("Resident2 update result: ", result);
+                res.status(200).end();   
+            }
+            else {
+                console.log("Residen2 update failed: ", result);
+                res.status(404).end('Resident not found'); 
+            }
+        }
+    );
+});
+
+router.get('/raw/data/record/:id', /*authenticated,*/ async (req, res, next) => {
+    let id = mongoose.Types.ObjectId(req.params.id);
+    // let start = new Date(req.body.start*1000);
+    // let end  = new Date(req.body.end*1000);
+    let start = new Date(req.body.start);
+    let end = new Date(req.body.end);
+    
+    let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    
+    let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
+
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
+
+    let filtered = await Resident.aggregate([
+        { $match:  { _id: id } },
+        { $project: {
+            "rawDataRecords": {
+                "$filter": {
+                    "input": "$rawDataRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
+                }
+            }
+        }},
+        { $project: {
+            "rawDataRecords": {
+                "$map": {
+                    "input": "$rawDataRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
+                            }
+                                
+                        }
+                    }
+                }
+            }
+        }},
+        {
+            $unwind: "$rawDataRecords"
+        },
+        {
+            $unwind: "$rawDataRecords.records"
+        },
+        {
+            $group: {
+                "_id": null,
+                "output": { "$push" : "$rawDataRecords.records" }
+              }
+            
+        }
+        ]);
+
+    if (filtered.length > 0) {
+        res.status(200).json(filtered[0].output);  
+    } else {
+        res.status(200).json([]);
+    }
+});
+
+router.get('/raw/data/record/:id/:start/:end', /*authenticated,*/ async (req, res, next) => {
+    let id = mongoose.Types.ObjectId(req.params.id);
+    let start = new Date(parseInt(req.params.start));
+    let end = new Date(parseInt(req.params.end));
+    
+    let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    
+    let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
+
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
+
+    let filtered = await Resident.aggregate([
+        { $match:  { _id: id } },
+        { $project: {
+            "rawDataRecords": {
+                "$filter": {
+                    "input": "$rawDataRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
+                }
+            }
+        }},
+        { $project: {
+            "rawDataRecords": {
+                "$map": {
+                    "input": "$rawDataRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
+                            }
+                                
+                        }
+                    }
+                }
+            }
+        }},
+        {
+            $unwind: "$rawDataRecords"
+        },
+        {
+            $unwind: "$rawDataRecords.records"
+        },
+        {
+            $group: {
+                "_id": null,
+                "output": { "$push" : "$rawDataRecords.records" }
+              }
+            
+        }
+        ]);
+
+    if (filtered.length > 0) {
+        res.status(200).json(filtered[0].output);  
+    } else {
+        res.status(200).json([]);
+    }
+});
+
+router.get('/sleep/record/:id', /*authenticated,*/ async (req, res, next) => {
     let id = mongoose.Types.ObjectId(req.params.id);
     // let start = new Date(req.body.start*1000);
     // let end  = new Date(req.body.end*1000);
@@ -420,7 +563,7 @@ router.get('/sleep/record/:id', authenticated, async (req, res, next) => {
                                 "cond": {
                                 "$and": [
                                     { "$gte": [ "$$this.timestamp", start ] },
-                                    { "$lte": [ "$$this.timestamp", end ] }
+                                    { "$lt": [ "$$this.timestamp", end ] }
                                 ]}
                             }
                                 
@@ -440,13 +583,87 @@ router.get('/sleep/record/:id', authenticated, async (req, res, next) => {
                 "_id": null,
                 "output": { "$push" : "$sleepRecords.records" }
               }
+            
         }
         ]);
-        
+
     if (filtered.length > 0) {
         res.status(200).json(filtered[0].output);  
     } else {
-        res.status(404).end('Sleep record not found');  
+        res.status(200).json([]);
+    }
+});
+
+router.get('/sleep/record/:id/:start/:end', /*authenticated,*/ async (req, res, next) => {
+    let id = mongoose.Types.ObjectId(req.params.id);
+    let start = new Date(parseInt(req.params.start));
+    let end = new Date(parseInt(req.params.end));
+    
+    let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    
+    let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
+
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
+
+    let filtered = await Resident.aggregate([
+        { $match:  { _id: id } },
+        { $project: {
+            "sleepRecords": {
+                "$filter": {
+                    "input": "$sleepRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
+                }
+            }
+        }},
+        { $project: {
+            "sleepRecords": {
+                "$map": {
+                    "input": "$sleepRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
+                            }
+                                
+                        }
+                    }
+                }
+            }
+        }},
+        {
+            $unwind: "$sleepRecords"
+        },
+        {
+            $unwind: "$sleepRecords.records"
+        },
+        {
+            $group: {
+                "_id": null,
+                "output": { "$push" : "$sleepRecords.records" }
+              }
+            
+        }
+        ]);
+
+    if (filtered.length > 0) {
+        res.status(200).json(filtered[0].output);  
+    } else {
+        res.status(200).json([]);
     }
 });
 
@@ -457,7 +674,7 @@ router.put('/vital/signs/record/:id', (req, res, next) => {
 
     // Create today record array if not exist.
     Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': { "$ne": today } }, 
-    { $push: { vitalSignsRecords: {day: today} } },
+        { $push: { vitalSignsRecords: {day: today} } },
         (err, result) => {
             if (err) {
                 console.log('Resident updateOne err: ' + err);
@@ -633,7 +850,7 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
     if (filtered.length > 0) {
         res.status(200).json(filtered[0].output);  
     } else {
-        res.status(404).end('Vital signs record not found');  
+        res.status(200).end([]);  
     }
 });
 
