@@ -27,7 +27,9 @@
         </div>
       </el-tab-pane>
 
-      <!-- <el-tab-pane label="個別紀錄範圍" name="third">個別紀錄範圍</el-tab-pane> -->
+      <el-tab-pane label="壓力分佈圖" name="third">
+        <heatmap v-if="isUpdate3" :residentId="this.resident._id" />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -37,6 +39,7 @@ import { getResidentInfo } from "@/api/resident";
 import VitalSignsHistory from "./component/VitalSignsHistory";
 import ResidentInfo from "./component/ResidentInfo";
 import EditInfo from "./component/EditInfo";
+import Heatmap from "./component/Heatmap";
 
 export default {
   filters: {
@@ -48,11 +51,12 @@ export default {
       return statusMap[status];
     },
   },
-  components: { ResidentInfo, EditInfo, VitalSignsHistory },
+  components: { ResidentInfo, EditInfo, VitalSignsHistory, Heatmap },
   data() {
     return {
       isUpdate1: true,
       isUpdate2: false,
+      isUpdate3: false,
       editInfo: false,
       activeName: "first",
       resident: {
@@ -96,9 +100,15 @@ export default {
       if (tab.name == "first") {
         this.isUpdate1 = true;
         this.isUpdate2 = false;
+        this.isUpdate3 = false;
       } else if (tab.name == "second") {
         this.isUpdate1 = false;
         this.isUpdate2 = true;
+        this.isUpdate3 = false;
+      } else if (tab.name == "third") {
+        this.isUpdate1 = false;
+        this.isUpdate2 = false;
+        this.isUpdate3 = true;
       }
     },
   },

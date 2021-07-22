@@ -159,6 +159,9 @@ export default {
         }
       }
     };
+    const validateNumber = (rule, value, callback) => {
+      if (typeof value != "number") callback(new Error("非數字"));
+    };
     return {
       form: {
         info: {

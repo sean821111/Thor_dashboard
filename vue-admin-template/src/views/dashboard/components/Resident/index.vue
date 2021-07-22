@@ -25,7 +25,7 @@
         <span v-if="resident"
           >{{ resident.bedNumber }} {{ resident.info.name }}</span
         >
-        <span v-else>Bed #</span>
+        <span v-else>無床號 #</span>
       </el-button>
 
       <button
@@ -49,17 +49,13 @@
       <div v-bind:class="[activeDeviceIndex == 0 ? 'active' : 'inactive']">
         Thor 1:
         {{
-          resident.thorDevices.length > 0
-            ? resident.thorDevices[0].name
-            : "null"
+          resident.thorDevices.length > 0 ? resident.thorDevices[0].name : "無"
         }}
       </div>
       <div v-bind:class="[activeDeviceIndex == 1 ? 'active' : 'inactive']">
         Thor 2:
         {{
-          resident.thorDevices.length > 1
-            ? resident.thorDevices[1].name
-            : "null"
+          resident.thorDevices.length > 1 ? resident.thorDevices[1].name : "無"
         }}
       </div>
     </div>
@@ -177,10 +173,10 @@ export default {
         vitalSigns: null,
         name: null,
         address: null,
-        isConnected: false
+        isConnected: false,
       },
       activeDeviceIndex: null,
-      initSleepEvent: null
+      initSleepEvent: null,
     };
   },
   props: {
@@ -188,18 +184,18 @@ export default {
       type: Object,
       default: null,
       required: true,
-    }
+    },
   },
   created() {
     this.initVitalSigns = {
       temp: this.NONE,
       hr: this.NONE,
       spo2: this.NONE,
-      pi: this.NONE
+      pi: this.NONE,
     };
     this.initSleepEvent = {
       timestamp: null,
-      event: this.NONE
+      event: this.NONE,
     };
     this.activeDevice.vitalSigns = this.initVitalSigns;
     this.resetActiveDevice();
@@ -252,7 +248,7 @@ export default {
         query: { residentId: this.resident._id },
       });
       //}
-    }
+    },
     // goRecordPage(){
 
     //   if (this.device.isConnected){
@@ -266,7 +262,7 @@ export default {
     //     id: this.resident._id,
     //   });
     // },
-  }
+  },
 };
 </script>
 
