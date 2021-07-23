@@ -39,7 +39,7 @@ import { getResidentInfo } from "@/api/resident";
 import VitalSignsHistory from "./component/VitalSignsHistory";
 import ResidentInfo from "./component/ResidentInfo";
 import EditInfo from "./component/EditInfo";
-import Heatmap from "./component/Heatmap";
+// import Heatmap from "./component/Heatmap";
 
 export default {
   filters: {
@@ -51,7 +51,7 @@ export default {
       return statusMap[status];
     },
   },
-  components: { ResidentInfo, EditInfo, VitalSignsHistory, Heatmap },
+  components: { ResidentInfo, EditInfo, VitalSignsHistory },
   data() {
     return {
       isUpdate1: true,
