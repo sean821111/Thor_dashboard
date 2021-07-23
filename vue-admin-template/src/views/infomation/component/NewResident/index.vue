@@ -51,20 +51,27 @@
               <el-input
                 v-model="form.info.idNumber"
                 style="width: 150px"
+                placeholder="請輸入合格字號"
               ></el-input>
             </el-form-item>
 
             <el-form-item label="身高:">
               <el-input
                 v-model="form.info.height"
-                style="width: 80px"
+                style="width: 120px"
+                placeholder="僅數字"
+                type="number"
+                clearable
               ></el-input>
             </el-form-item>
 
             <el-form-item label="體重:">
               <el-input
                 v-model="form.info.weight"
-                style="width: 80px"
+                style="width: 120px"
+                placeholder="僅數字"
+                type="number"
+                clearable
               ></el-input>
             </el-form-item>
 
@@ -79,7 +86,12 @@
 
           <el-col :span="6">
             <el-form-item label="身體狀況：">
-              <el-input type="textarea" v-model="form.health"></el-input>
+              <el-input
+                type="textarea"
+                v-model="form.health"
+                maxlength="30"
+                placeholder="限制30字"
+              ></el-input>
             </el-form-item>
           </el-col>
 

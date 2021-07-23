@@ -58,8 +58,10 @@
               <el-input
                 v-model="resident.info.height"
                 v-show="editInfo"
-                style="width: 100px"
+                style="width: 120px"
                 placeholder="僅數字"
+                type="number"
+                clearable
               ></el-input>
             </el-form-item>
 
@@ -67,8 +69,10 @@
               <el-input
                 v-model="resident.info.weight"
                 v-show="editInfo"
-                style="width: 100px"
+                style="width: 120px"
                 placeholder="僅數字"
+                type="number"
+                clearable
               ></el-input>
             </el-form-item>
 

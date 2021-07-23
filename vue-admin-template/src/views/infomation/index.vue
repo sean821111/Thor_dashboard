@@ -27,9 +27,9 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="壓力分佈圖" name="third">
+      <!-- <el-tab-pane label="壓力分佈圖" name="third">
         <heatmap v-if="isUpdate3" :residentId="this.resident._id" />
-      </el-tab-pane>
+      </el-tab-pane> -->
     </el-tabs>
   </div>
 </template>
