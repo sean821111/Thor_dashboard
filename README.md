@@ -1,11 +1,13 @@
 # Thor_dashboard
 Vital signs dashboard for Thor, an ear type wearable device.
 
-![Thor_dathaboard_main](https://imgur.com/V7JYSWQ.png)
+![Thor_dathaboard_main](https://imgur.com/edMPL86.png)
 
-![vital_sign_history](https://imgur.com/PxnOjvz.png)
+![vital_sign_history](https://imgur.com/pQldyAw.png)
 
+![edit_resident](https://imgur.com/pQldyAw.png)
 
+#Prerequires
 ## Installing Node.js and npm from NodeSource
 
 1. Enable the NodeSource repository by running the following curl command as a user with sudo privileges :
@@ -76,25 +78,15 @@ npm install -g @vue/cli
 # Getting started
 
 ```bash
-# enter the backend directory
-cd backend
+# enter the directory
+cd Thor_dashboard
 
-# install dependency
-npm install
+# Building project
+docker-compose build
 
-# running backend
-npm run start
-```
+# Up container
+docker-compose up
 
-```bash
-# enter the project directory
-cd vue-element-admin
-
-# install dependency
-npm install
-
-# develop
-npm run dev
 ```
 
 
