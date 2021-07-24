@@ -7,7 +7,7 @@ Vital signs dashboard for Thor, an ear type wearable device.
 
 ![edit_resident](https://imgur.com/pQldyAw.png)
 
-#Prerequires
+# Prerequires
 ## Installing Node.js and npm from NodeSource
 
 1. Enable the NodeSource repository by running the following curl command as a user with sudo privileges :
