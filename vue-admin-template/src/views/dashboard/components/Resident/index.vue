@@ -137,19 +137,20 @@
           <span style="float: right" >{{ }}/{{ }}</span>
         </div> -->
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
         <div
           v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr == None"
         >
-          <svg-icon icon-class="ble_connected" class-name="connect-panel" />
+          <svg-icon icon-class="ble_connected" class-name="icon-wrapper" />
         </div>
         <div
           v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != None"
         >
-          <svg-icon icon-class="user" class-name="connect-panel" />
+          <svg-icon icon-class="user" class-name="icon-wrapper" />
+          <!-- <app-icon name="user" size="l" fill></app-icon> -->
         </div>
         <div v-else>
-          <svg-icon icon-class="ble_disconected" class-name="connect-panel" />
+          <svg-icon icon-class="ble_disconected" class-name="icon-wrapper" />
         </div>
       </el-col>
     </el-row>
@@ -158,6 +159,7 @@
 
 <script>
 import ConfirmDialogue from "../ConfirmDialogue.vue";
+// import AppIcon from "./components/AppIcon";
 
 export default {
   name: "Resident",
@@ -359,5 +361,13 @@ export default {
   font-size: 16px;
   text-transform: uppercase;
   cursor: pointer;
+}
+.icon-wrapper {
+  color: #36a3f7;
+
+  height: 5em;
+  width: 4em;
+  margin-top: 50px;
+  margin-left: 10px;
 }
 </style>
