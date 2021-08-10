@@ -141,11 +141,11 @@ export default {
         nextDay.setDate(nextDay.getDate() + 1);
         this.dateSelect = nextDay;
         console.log("next date select: " + this.dateSelect);
-        this.dateSubmit();
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
       } else {
         this.dateSelect = this.getSunday(this.dateSelect, "next");
         console.log("next week select: " + new Date(this.dateSelect));
-        this.dateSubmit();
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
       }
     },
     last() {
@@ -159,11 +159,11 @@ export default {
         lastDay.setDate(lastDay.getDate() - 1);
         this.dateSelect = lastDay;
         console.log("last date select: " + this.dateSelect);
-        this.dateSubmit();
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
       } else {
         this.dateSelect = this.getSunday(this.dateSelect, "last");
         console.log("last week select: " + new Date(this.dateSelect));
-        this.dateSubmit();
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
       }
     },
     getSunday(d, select) {

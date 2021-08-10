@@ -25,10 +25,10 @@
             <h2>住民資訊</h2>
           </el-col>
           <el-col :span="6">
-            <h2>住民身體狀況</h2>
+            <h2>裝置資訊</h2>
           </el-col>
           <el-col :span="6">
-            <h2>裝置資訊</h2>
+            <h2>住民身體狀況</h2>
           </el-col>
         </el-row>
 
@@ -83,18 +83,6 @@
               ></el-date-picker>
             </el-form-item>
           </el-col>
-
-          <el-col :span="6">
-            <el-form-item label="身體狀況：">
-              <el-input
-                type="textarea"
-                v-model="form.health"
-                maxlength="30"
-                placeholder="限制30字"
-              ></el-input>
-            </el-form-item>
-          </el-col>
-
           <el-col :span="6">
             <el-form-item label="床號：" prop="bedNumber">
               <el-input v-model="form.bedNumber"></el-input>
@@ -120,16 +108,26 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <!-- <el-form-item label="Pairs裝置：">
-                  <el-select v-model="form.pairsDeviceName" placeholder="Select">
-                    <el-option
-                      v-for="device in validPairsDevices"
-                      :key="device.address"
-                      :label="device.name"
-                      :value="device.address">
-                    </el-option>
-                  </el-select>
-                </el-form-item> -->
+            <el-form-item label="Paris裝置：">
+              <el-select v-model="form.pairsDeviceName" placeholder="Select">
+                <el-option
+                  v-for="deviceName in validParisDeviceNames"
+                  :key="deviceName"
+                  :value="deviceName"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="身體狀況：">
+              <el-input
+                type="textarea"
+                v-model="form.health"
+                maxlength="30"
+                placeholder="限制30字"
+              ></el-input>
+            </el-form-item>
           </el-col>
         </el-row>
       </el-form>
@@ -139,7 +137,7 @@
 
 
 <script>
-import { getDeviceList } from "@/api/device";
+import { getDeviceList, getParisDeviceList } from "@/api/device";
 import { addResident } from "@/api/resident";
 
 export default {
@@ -188,10 +186,10 @@ export default {
         bedNumber: "",
         remark: null,
         thorDeviceNames: ["null", "null"],
-        pairsDeviceName: null,
+        pairsDeviceName: "null",
       },
       validThorDeviceNames: ["null"],
-      validPairsDevices: ["null"],
+      validParisDeviceNames: ["null"],
       rules: {
         "info.name": [
           { required: true, message: "請輸入姓名", trigger: "blur" },
@@ -221,6 +219,13 @@ export default {
             JSON.stringify(this.validThorDeviceNames)
         );
       });
+      getParisDeviceList().then((response) => {
+        for (var i = 0; i < response.data.length; i++) {
+          if (response.data[i].resident == null) {
+            this.validParisDeviceNames.push(response.data[i].name);
+          }
+        }
+      });
     },
     cancel() {
       console.log("cancel");
@@ -231,6 +236,7 @@ export default {
       this.form.thorDeviceNames = this.form.thorDeviceNames.filter(
         (deviceName) => deviceName !== "null"
       );
+      if (this.form.pairsDeviceName == "null") this.form.pairsDeviceName = null;
       console.log("form: " + JSON.stringify(this.form));
       this.$refs["form"].validate((valid) => {
         if (valid) {

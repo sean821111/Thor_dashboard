@@ -23,10 +23,10 @@
             <h2>住民資訊</h2>
           </el-col>
           <el-col :span="6">
-            <h2>住民身體狀況</h2>
+            <h2>裝置資訊</h2>
           </el-col>
           <el-col :span="6">
-            <h2>裝置資訊</h2>
+            <h2>住民身體狀況</h2>
           </el-col>
         </el-row>
         <el-row :gutter="30">
@@ -87,18 +87,6 @@
           </el-col>
 
           <el-col :span="6">
-            <el-form-item label="身體狀況：">
-              <el-input
-                type="textarea"
-                v-model="resident.health"
-                v-show="editInfo"
-                maxlength="30"
-                placeholder="限制30字"
-              ></el-input>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="6">
             <el-form-item label="床號：" prop="bedNumber">
               <el-input
                 v-model="resident.bedNumber"
@@ -126,6 +114,27 @@
                 </el-option>
               </el-select>
             </el-form-item>
+            <el-form-item label="Paris裝置：">
+              <el-select v-model="parisDeviceName" placeholder="Select">
+                <el-option
+                  v-for="deviceName in validParisDeviceNames"
+                  :key="deviceName"
+                  :value="deviceName"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="身體狀況：">
+              <el-input
+                type="textarea"
+                v-model="resident.health"
+                v-show="editInfo"
+                maxlength="30"
+                placeholder="限制30字"
+              ></el-input>
+            </el-form-item>
           </el-col>
         </el-row>
       </el-form>
@@ -135,7 +144,7 @@
 
 
 <script>
-import { getDeviceList } from "@/api/device";
+import { getDeviceList, getParisDeviceList } from "@/api/device";
 import { updateResident } from "@/api/resident";
 
 export default {
@@ -171,6 +180,8 @@ export default {
       editInfo: true,
       thorDeviceNames: ["null", "null"],
       validThorDeviceNames: ["null"],
+      parisDeviceName: "null",
+      validParisDeviceNames: ["null"],
       rules: {
         "info.name": [
           { required: true, message: "請輸入姓名", trigger: "blur" },
@@ -196,11 +207,12 @@ export default {
 
   methods: {
     fetchDeviceData() {
+      //Get Thor device list
+      for (var i = 0; i < this.resident.thorDevices.length; i++) {
+        this.validThorDeviceNames.push(this.resident.thorDevices[i].name);
+        this.thorDeviceNames[i] = this.resident.thorDevices[i].name;
+      }
       getDeviceList().then((response) => {
-        for (var i = 0; i < this.resident.thorDevices.length; i++) {
-          this.validThorDeviceNames.push(this.resident.thorDevices[i].name);
-          this.thorDeviceNames[i] = this.resident.thorDevices[i].name;
-        }
         for (var i = 0; i < response.data.length; i++) {
           if (response.data[i].resident == null) {
             this.validThorDeviceNames.push(response.data[i].name);
@@ -211,20 +223,41 @@ export default {
             JSON.stringify(this.validThorDeviceNames)
         );
       });
+
+      // Get paris device list
+      this.parisDeviceName =
+        this.resident.pairsDevice == null
+          ? "null"
+          : this.resident.pairsDevice.name;
+      if (this.parisDeviceName != "null")
+        this.validParisDeviceNames.push(this.parisDeviceName);
+
+      console.log("this.parisDeviceName: " + this.parisDeviceName);
+
+      getParisDeviceList().then((response) => {
+        for (var i = 0; i < response.data.length; i++) {
+          if (response.data[i].resident == null) {
+            this.validParisDeviceNames.push(response.data[i].name);
+          }
+        }
+      });
+      console.log(
+        "this.validParisDeviceNames: " +
+          JSON.stringify(this.validParisDeviceNames)
+      );
     },
     save() {
       this.thorDeviceNames = this.thorDeviceNames.filter(
         (deviceName) => deviceName != "null"
       );
+
       let data = {
         info: this.resident.info,
         health: this.resident.health,
         bedNumber: this.resident.bedNumber,
         remark: this.resident.remark,
         pairsDeviceName:
-          this.resident.pairsDevice == null
-            ? null
-            : this.resident.pairsDevice._id,
+          this.parisDeviceName == "null" ? null : this.parisDeviceName,
         thorDeviceNames: this.thorDeviceNames,
       };
       this.$refs["form"].validate((valid) => {

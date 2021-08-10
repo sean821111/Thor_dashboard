@@ -24,12 +24,12 @@ router.post('/add', (req, res, next) => {
             res.status(200).end();
         }
     });
-    
+
 });
 
 router.delete('/:deviceName', (req, res, next) => {
     console.log("name: " + req.params.deviceName);
-    
+
     PairsDevice.deleteOne({ name: req.params.deviceName }, (err, result) => {
         if (err) {
             next(err);
@@ -70,7 +70,7 @@ router.put('/connection/state/:deviceName', (req, res, next) => {
             event: -1,
         }
     }
-    PairsDevice.updateOne({ name: req.params.deviceName }, 
+    PairsDevice.updateOne({ name: req.params.deviceName },
         { $set: update },
         (err, result) => {
             if (err) {
@@ -90,7 +90,7 @@ router.put('/connection/state/:deviceName', (req, res, next) => {
 });
 
 router.put('/battery/:deviceName', (req, res, next) => {
-    PairsDevice.updateOne({ name: req.params.deviceName }, 
+    PairsDevice.updateOne({ name: req.params.deviceName },
         { $set: { battery: req.body.battery } },
         (err, result) => {
             if (err) {
@@ -111,16 +111,18 @@ router.put('/battery/:deviceName', (req, res, next) => {
 
 router.put('/raw/data/:deviceName', (req, res, next) => {
     let deviceName = req.params.deviceName;
-    PairsDevice.updateOne({ name: deviceName }, 
+    console.log('deviceName ' + deviceName);
+    console.log('Raw data ' + JSON.stringify(req.body));
+    PairsDevice.updateOne({ name: deviceName },
         { $set: { rawData: req.body.rawData } },
         (err, result) => {
             if (err) {
                 next(err);
             } else if (result.n != 0) {
-                console.log(result);
+                console.log('Raw data update ' + result);
                 var message = {
                     name: req.params.deviceName,
-                    rawData: req.body.vitalSigns
+                    rawData: req.body.rawData
                 }
                 deviceUpdate.sse.send(message);
                 res.status(200).end();
@@ -146,7 +148,7 @@ router.get('/raw/data/:deviceName', (req, res, next) => {
 router.put('/sleep/event/:deviceName', (req, res, next) => {
     let deviceName = req.params.deviceName;
     req.body.sleepEvent.timestamp = new Date(req.body.sleepEvent.timestamp * 1000);
-    PairsDevice.updateOne({ name: deviceName }, 
+    PairsDevice.updateOne({ name: deviceName },
         { $set: { sleepEvent: req.body.sleepEvent } },
         (err, result) => {
             if (err) {

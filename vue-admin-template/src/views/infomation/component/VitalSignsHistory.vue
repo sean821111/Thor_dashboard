@@ -135,7 +135,7 @@ export default {
   },
   data() {
     return {
-      residentName: "",
+      residentName: null,
       lineChartData: lineChartData.hr,
       vitalSignRecords: null,
       isConnected: null,
@@ -286,7 +286,6 @@ export default {
     dateSubmit(isDate, dateSelect) {
       this.isDate = isDate;
       if (isDate) {
-        // console.log("====== select date from emit: " + dateSelect);
         // Convert date to 00:00 in timestamp
         this.initDateStart = new Date(
           new Date(dateSelect).toLocaleDateString()
