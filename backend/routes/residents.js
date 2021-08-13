@@ -8,24 +8,18 @@ var deviceUpdate = require('./device_update');
 var router = express.Router();
 
 router.post('/add', authenticated, async (req, res, next) => {
-
-    console.log('resident data: ' + JSON.stringify(req.body));
+    console.log('Resident add: ' + JSON.stringify(req.body));
     let data = req.body;
 
-    let pairsDevice = await PairsDevice.findOne({ "name": data.pairsDeviceName });
-    // let thorDevice = await ThorDevice.findOne({ "name": data.thorDeviceName });
-    let thorDevices = await ThorDevice.find({ "name": { $in: data.thorDeviceNames } });
+    let thorDevices = null, pairsDevice = null;
+    try {
+        thorDevices = await ThorDevice.find({ "name": { $in: data.thorDeviceNames } });
+        pairsDevice = await PairsDevice.findOne({ "name": data.pairsDeviceName });
+    } catch (err) {
+        console.log('Device find err: ' + err);
+        return next(err);
+    }
     
-    data['pairsDevice'] = null;
-    if (pairsDevice) {
-        if (pairsDevice.resident == null) 
-            data['pairsDevice'] = pairsDevice._id;
-        else
-            return res.status(403).end('Pairs device already bind'); 
-    } else if (data.pairsDeviceName)
-        return res.status(404).end('Pairs device not found'); 
-    delete data['pairsDeviceName'];
-
     data['thorDevices'] = []
     if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
         for (var i = 0; i < thorDevices.length; ++i)
@@ -40,28 +34,26 @@ router.post('/add', authenticated, async (req, res, next) => {
         data['thorDevices'].push(thorDevices[i]._id);
     delete data['thorDeviceNames'];
 
+    data['pairsDevice'] = null;
+    if (pairsDevice) {
+        if (pairsDevice.resident == null) 
+            data['pairsDevice'] = pairsDevice._id;
+        else 
+            return res.status(403).end('Pairs device already bind'); 
+    } else if (data.pairsDeviceName)
+        return res.status(404).end('Pairs device not found'); 
+    delete data['pairsDeviceName'];
+
     Resident.findOne({ 'info.idNumber': data.info.idNumber }, (err, resident) => {
         if (err) {
             console.log('Resident findOne err: ' + err);
             next(err);
         } else if (resident) {
             console.log('Resident found: ' + resident);
-            res.status(403).end('Resident already exists');         
+            res.status(403).end('Resident id number already exists');         
         } else {
             resident = new Resident(data);
             resident.save();
-
-            if (pairsDevice) {
-                pairsDevice.resident = resident._id;
-                pairsDevice.save();
-                var message = {
-                    name: pairsDevice.name,
-                    resident: {
-                        _id: resident._id,
-                    }
-                }
-                deviceUpdate.sse.send(message);
-            }
 
             for (var i = 0; i < thorDevices.length; i++) {
                 console.log("Bind device: " + thorDevices[i].name);
@@ -73,14 +65,29 @@ router.post('/add', authenticated, async (req, res, next) => {
                         _id: resident._id,
                     }
                 }
+                deviceUpdate.sse.send(message, "");
+            }
+
+            if (pairsDevice) {
+                console.log("Bind device: " + pairsDevice.name);
+                pairsDevice.resident = resident._id;
+                pairsDevice.save();
+                var message = {
+                    name: pairsDevice.name,
+                    resident: {
+                        _id: resident._id,
+                    }
+                }
                 deviceUpdate.sse.send(message);
             }
+
             res.status(200).end();
         }
     });    
 });
 
 router.delete('/:id', authenticated, (req, res, next) => {
+    console.log('Resident delete: ' + req.params.id);
     Resident.deleteOne({ _id: req.params.id }, (err, result) => {
         if (err) {
             next(err);
@@ -89,33 +96,29 @@ router.delete('/:id', authenticated, (req, res, next) => {
                 console.log(result); // Success
                 ThorDevice.updateMany({ resident: req.params.id }, 
                     { $set: { resident: null } }, 
-                    (err, result2) => {
-                        console.log(result2);
+                    (err, result) => {
+                        console.log(result);
                         if (err) {
                             console.log('ThorDevice updateMany err: ' + err);
                             next(err);
-                        } else if (result2.ok) {
-                            res.status(200).end();         
-                        } else {
-                            res.status(404).end('ThorDevice updateMany failed'); 
+                        } else if (result.ok) {
+                            PairsDevice.updateOne({ resident: req.params.id }, 
+                                { $set: { resident: null } }, 
+                                (err, result) => {
+                                    console.log(result);
+                                    if (err) {
+                                        console.log('PairsDevice updateOne err: ' + err);
+                                        next(err);
+                                    } else if (result.ok) {
+                                        res.status(200).end();
+                                    }
+                                }); 
                         }
                     }); 
 
-                PairsDevice.updateOne({ resident: req.params.id }, 
-                    { $set: { resident: null } }, 
-                    (err, result2) => {
-                        console.log(result2);
-                        if (err) {
-                            console.log('PairsDevice updateOne err: ' + err);
-                            next(err);
-                        } else if (result2.ok) {
-                            res.status(200).end();         
-                        } else {
-                            res.status(404).end('PairsDevice updateOne failed'); 
-                        }
-                    }); 
+                
             } else {
-                res.status(404).end();
+                res.status(404).end("Resident not found");
             }
         }
     });
@@ -123,132 +126,130 @@ router.delete('/:id', authenticated, (req, res, next) => {
 
 router.put('/update/:id', authenticated, async (req, res, next) => {
     let data = req.body;
-    let resident = await Resident.findOne({ _id: req.params.id });
+    let resident = null;
+    try {
+        resident = await Resident.findOne({ _id: req.params.id });
 
-    if (resident == null)
-        return res.status(404).end('Resident not found');  
+        if (resident == null)
+            return res.status(404).end('Resident not found');  
 
-    if (resident.info.idNumber != data.info.idNumber) {
-        let checkIdNumber = await Resident.findOne({ 'info.idNumber': data.info.idNumber });
-        if (checkIdNumber)
-            return res.status(403).end('Resident id number already exists'); 
-    }
-
-    //console.log("resident " + JSON.stringify(resident));
-    let update = { 
-        info: data.info, 
-        health: data.health, 
-        bedNumber: data.bedNumber, 
-        remark: data.remark,
-        pairsDevice: data.pairsDevice,
-        thorDevice: data.thorDevice
-    }
-
-    let newPairsDevice = await PairsDevice.findOne({ name: data.pairsDeviceName });
-    if (newPairsDevice) {
-        if (newPairsDevice.resident == null) {
-            // Bind a new device.
-            update['pairsDevice'] = newPairsDevice._id;
-            newPairsDevice.resident = resident._id; 
-            newPairsDevice.save();
-            var message = {
-                name: newPairsDevice.name,
-                resident: {
-                    _id: resident._id,
-                  }
-            }
-            deviceUpdate.sse.send(message);
-        } else if (newPairsDevice.resident.equals(resident._id)) {
-            update['pairsDevice'] = newPairsDevice._id;
-        } else {
-            return res.status(403).end('Pairs device already bind');
+        if (resident.info.idNumber != data.info.idNumber) {
+            let checkIdNumber = await Resident.findOne({ 'info.idNumber': data.info.idNumber });
+            if (checkIdNumber)
+                return res.status(403).end('Resident id number already exists'); 
         }
-    } else if (data.pairsDeviceName) {
-        return res.status(404).end('Pairs device not found');
+    } catch (err) {
+        console.log('Resident find err: ' + err);
+        return next(err);
     }
-    
-    if (resident.pairsDevice) {
-        let oldPairsDevice = await PairsDevice.findOne({ _id: resident.pairsDevice });
-        if (oldPairsDevice.name != data.pairsDeviceName) {
-            // Unbind device
-            oldPairsDevice.resident = null;
-            oldPairsDevice.save();
-            if (data.thorDeviceName == null) {
+
+    let thorDevices = null, pairsDevice = null;
+    try {
+        thorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
+        pairsDevice = await PairsDevice.findOne({ name: data.pairsDeviceName });
+    } catch (err) {
+        console.log('Device find err: ' + err);
+        return next(err);
+    }
+
+    data['thorDevices'] = [];
+    if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
+        for (var i = 0; i < thorDevices.length; ++i)
+            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(thorDevices[i].name), 1);
+        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
+    }
+    for (var i = 0; i < thorDevices.length; ++i) {
+        if (thorDevices[i].resident == null || thorDevices[i].resident.equals(resident._id)) {
+            data['thorDevices'].push(thorDevices[i]._id);
+        } else {
+            return res.status(403).end('Thor device already bind: ' + thorDevices[i].name);
+        }
+        
+    }
+
+    data['pairsDevice'] = null;
+    if (pairsDevice) {
+        if (pairsDevice.resident == null || pairsDevice.resident.equals(resident._id)) 
+            data['pairsDevice'] = pairsDevice._id;
+        else
+            return res.status(403).end('Pairs device already bind'); 
+    } else if (data.pairsDeviceName)
+        return res.status(404).end('Pairs device not found'); 
+
+    try {
+        let bindThorDevices = await ThorDevice.find({ _id: { $in: resident.thorDevices } });
+        for (var i = 0; i < bindThorDevices.length; ++i) {
+            let index = data.thorDeviceNames.indexOf(bindThorDevices[i].name);
+            if (index == -1) {
+                console.log("Unbind device: " + bindThorDevices[i].name);
+                bindThorDevices[i].resident = null;
+                bindThorDevices[i].save();
                 var message = {
-                    name: oldPairsDevice.name,
+                    name: bindThorDevices[i].name,
                     resident: null
                 }
                 deviceUpdate.sse.send(message);
+            } else {
+                thorDevices = thorDevices.filter(device => device.name !== data.thorDeviceNames[index]);
             }
         }
-    }
-
-    let newThorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
-    update['thorDevices'] = [];
-    if (data.thorDeviceNames.length > 0 && newThorDevices.length != data.thorDeviceNames.length) {
-        for (var i = 0; i < newThorDevices.length; ++i)
-            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(newThorDevices[i].name), 1);
-        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
-    }
-    for (var i = 0; i < newThorDevices.length; ++i) 
-        if (newThorDevices[i].resident != null && !newThorDevices[i].resident.equals(resident._id))
-            return res.status(403).end('Thor device already bind: ' + newThorDevices[i].name);
-  
-    for (var i = 0; i < newThorDevices.length; ++i) {
-        var newThorDevice = newThorDevices[i];
-        if (newThorDevice.resident == null) {
-            // Bind a new device.
-            console.log("Bind device: " + newThorDevice.name);
-            update['thorDevices'].push(newThorDevice._id);
-            newThorDevice.resident = resident._id; 
-            newThorDevice.save();
+        for (var i = 0; i < thorDevices.length; i++) {
+            console.log("Bind device: " + thorDevices[i].name);
+            thorDevices[i].resident = resident._id;
+            thorDevices[i].save();
             var message = {
-                name: newThorDevice.name,
+                name: thorDevices[i].name,
                 resident: {
                     _id: resident._id,
-                  }
-            }
-            deviceUpdate.sse.send(message);
-        } else if (newThorDevice.resident.equals(resident._id)) {
-            update['thorDevices'].push(newThorDevice._id);
-        }
-    }
-
-    let oldThorDevices = await ThorDevice.find({ _id: { $in: resident.thorDevices } });
-    for (var i = 0; i < oldThorDevices.length; ++i) {
-        var oldThorDevice = oldThorDevices[i];
-        if (data.thorDeviceNames.indexOf(oldThorDevice.name) == -1) {
-            console.log("Unbind device: " + oldThorDevice.name);
-            oldThorDevice.resident = null;
-            oldThorDevice.save();
-            var message = {
-                name: oldThorDevice.name,
-                resident: null
+                }
             }
             deviceUpdate.sse.send(message);
         }
-    }
-
-    Resident.updateOne({ _id: req.params.id, 'info.idNumber': data.info.idNumber },
-        { $set: update }, 
-        (err, result) => {
-            if (err) {
-                console.log('Resident updateOne err: ' + err);
-                next(err);
-            } else if (result.n != 0) {
-                res.status(200).end();         
+        
+        if (resident.pairsDevice) {
+            let bindPairsDevice = await PairsDevice.findOne({ _id: resident.pairsDevice });
+            if (data.pairsDeviceName !== bindPairsDevice.name) {
+                console.log("Unbind device: " + bindPairsDevice.name);
+                bindPairsDevice.resident = null;
+                bindPairsDevice.save();
+                var message = {
+                    name: bindPairsDevice.name,
+                    resident: null
+                }
+                deviceUpdate.sse.send(message);
             } else {
-                res.status(404).end('Resident update failed'); 
+                pairsDevice = null;
             }
         }
-    );  
+        if (pairsDevice) {
+            console.log("Bind device: " + pairsDevice.name);
+            pairsDevice.resident = resident._id;
+            pairsDevice.save();
+            var message = {
+                name: pairsDevice.name,
+                resident: {
+                    _id: resident._id,
+                }
+            }
+            deviceUpdate.sse.send(message);
+        }
+    } catch (err) {
+        console.log('bind device find err: ' + err);
+        return next(err);
+    }
+
+    delete data['thorDeviceNames'];
+    delete data['pairsDeviceName'];
+    resident.set(data);
+    resident.save();
+    res.status(200).end();    
 });
 
 
 router.get('/info/:id', authenticated, (req, res, next) => {
-    Resident.findOne({ _id: req.params.id }, '-__v -sleepRecords -vitalSignsRecords')
-        .populate('pairsDevice', '-__v')
+    Resident.findOne({ _id: req.params.id }, '-__v -vitalSignsRecords -rawDataRecords -sleepRecords')
         .populate('thorDevices', '-__v')
+        .populate('pairsDevice', '-__v')
         .exec((err, resident) => {
             if (err) {
                 console.log('Resident findOne err: ' + err);
@@ -266,9 +267,9 @@ router.get('/info/:id', authenticated, (req, res, next) => {
 
 router.get('/list', authenticated, (req, res, next) => {
 
-    Resident.find({}, '-__v -sleepRecords -vitalSignsRecords')
-        .populate('pairsDevice', '-__v')
+    Resident.find({}, '-__v -vitalSignsRecords -rawDataRecords -sleepRecords')
         .populate('thorDevices', '-__v')
+        .populate('pairsDevice', '-__v')
         .exec((err, residents) => {
             if (err) {
                 console.log('Resident findOne err: ' + err);
@@ -287,7 +288,7 @@ router.get('/list', authenticated, (req, res, next) => {
 router.put('/raw/data/record/:id', (req, res, next) => {
     let timestamp = new Date(req.body.timestamp * 1000);
     let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
-
+ 
     // Create today record array if not exist.
     Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': { "$ne": today } }, 
         { $push: { rawDataRecords: {day: today} } },
@@ -303,8 +304,6 @@ router.put('/raw/data/record/:id', (req, res, next) => {
             }
         }
     );
-
-    
 
     // Insert record object in today record array.
     Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today }, 
@@ -325,6 +324,48 @@ router.put('/raw/data/record/:id', (req, res, next) => {
             }
         }
     );
+});
+
+router.put('/offline/raw/data/record/:id', (req, res, next) => {
+    let date = new Date(req.body.date * 1000);
+    let records = req.body.records;
+   
+    for(var i in records) {
+        records[i].timestamp = new Date(records[i].timestamp * 1000);
+    }
+   
+    // Create today record array if not exist.
+    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': { "$ne": date } }, 
+        { $push: { rawDataRecords: { day: date} } },
+        (err, result) => {
+            if (err) {
+                console.log('Resident updateOne err: ' + err);
+                next(err);   
+            } else if (result.ok != 0) {
+                // Insert record object in today record array.
+                Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': date }, 
+                    {
+                        $push: { 'rawDataRecords.$.records': { $each: records } }
+                    },
+                    (err, result) => {
+                        if (err) {
+                            console.log('Resident update err: ' + err);
+                            next(err);   
+                        } else if (result.n != 0) {
+                            console.log("Resident update result: ", result);
+                            res.status(200).json({length: records.length});   
+                        }
+                        else {
+                            console.log("Residen update failed: ", result);
+                            res.status(404).end('Resident not found'); 
+                        }
+                    }
+                );
+            }
+        }
+    );
+
+    
 });
 
 
@@ -348,8 +389,6 @@ router.put('/sleep/record/:id', (req, res, next) => {
         }
     );
 
-    
-
     // Insert record object in today record array.
     Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today }, 
         {
@@ -369,6 +408,45 @@ router.put('/sleep/record/:id', (req, res, next) => {
             }
         }
     );
+});
+
+router.put('/offline/sleep/record/:id', (req, res, next) => {
+    let date = new Date(req.body.date * 1000);
+    let records = req.body.records;
+    console.log("event date " + date);
+    
+    for(var i in records) {
+        records[i].timestamp = new Date(records[i].timestamp * 1000);
+    }
+
+    // Create today record array if not exist.
+    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': { "$ne": date } }, 
+        { $push: { sleepRecords: { day: date } } },
+        (err, result) => {
+            if (err) {
+                console.log('Resident updateOne err: ' + err);
+                next(err);   
+            } else if (result.ok != 0) {
+                // Insert record object in today record array.
+                Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': date }, 
+                    { $push: { 'sleepRecords.$.records': { $each: records } } },
+                    (err, result) => {
+                        if (err) {
+                            console.log('Resident update err: ' + err);
+                            next(err);   
+                        } else if (result.n != 0) {
+                            console.log("Resident update result: ", result);
+                            res.status(200).json({length: records.length}); 
+                        } else {
+                            console.log("Resident update failed: ", result);
+                            res.status(404).end('Resident not found'); 
+                        }
+                    }
+                );
+            }
+        }
+    );
+    
 });
 
 router.get('/raw/data/record/:id', /*authenticated,*/ async (req, res, next) => {
@@ -863,6 +941,24 @@ function scheduleCronstyle(){
         Resident.updateMany({ 'vitalSignsRecords.0': { $exists: true } },
             { 
                 $pull: { vitalSignsRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => { 
+                if (err) 
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+        Resident.updateMany({ 'rawDataRecords.0': { $exists: true } },
+            { 
+                $pull: { rawDataRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => { 
+                if (err) 
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+        Resident.updateMany({ 'sleepRecords.0': { $exists: true } },
+            { 
+                $pull: { sleepRecords: { day: { $lt: expireTime } } }
             }, (err, result) => { 
                 if (err) 
                     console.log(err);
