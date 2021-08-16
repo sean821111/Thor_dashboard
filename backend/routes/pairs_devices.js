@@ -1,5 +1,6 @@
 var express = require('express');
 const PairsDevice = require('../database/models/pairs_device');
+const Resident = require('../database/models/resident');
 var authenticated = require('./authenticated');
 var deviceUpdate = require('./device_update');
 var router = express.Router();
@@ -29,16 +30,39 @@ router.post('/add', (req, res, next) => {
 
 router.delete('/:deviceName', (req, res, next) => {
     console.log("name: " + req.params.deviceName);
-
     PairsDevice.deleteOne({ name: req.params.deviceName }, (err, result) => {
+
         if (err) {
             next(err);
         } else {
-            if (result.n != 0) {
-                console.log(result); // Success 
-                res.status(200).end();
+            if (device) {
+                if (device.resident) {
+                    Resident.updateOne({ _id: device.resident }, 
+                        {
+                            $set: { pairsDevice: null }
+                        },
+                        (err, result) => {
+                            if (err) {
+                                next(err);
+                            } else if (result.n != 0) {
+                                var message = {
+                                    name: device.name,
+                                    resident: null
+                                }
+                                deviceUpdate.sse.send(message);
+                                res.status(200).end();
+                            } else {
+                                res.status(404).end("Resident not update failed");
+                            }
+                        }
+                    );
+                } else {
+                    console.log("Device is not be bind yet");
+                    res.status(200).end();
+                }
+               
             } else {
-                res.status(404).end();
+                res.status(404).end("Device not found");
             }
         }
     });
@@ -109,6 +133,7 @@ router.put('/battery/:deviceName', (req, res, next) => {
         });
 });
 
+var cnt = 0;
 router.put('/raw/data/:deviceName', (req, res, next) => {
     let deviceName = req.params.deviceName;
     console.log('deviceName ' + deviceName);
