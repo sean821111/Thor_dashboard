@@ -5,7 +5,6 @@ Vital signs dashboard for Thor, an ear type wearable device.
 
 ![heatmap](https://imgur.com/97a34K3.png)
 
-```
 
 # Getting started
 
