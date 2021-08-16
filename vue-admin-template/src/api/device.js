@@ -35,3 +35,11 @@ export function updateVitalSign(name) {
     method: 'put'
   })
 }
+
+// Paris device
+export function getParisDeviceList() {
+  return request({
+    url: 'pairs/devices/list',
+    method: 'get'
+  })
+}

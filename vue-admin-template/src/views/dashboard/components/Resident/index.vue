@@ -22,10 +22,10 @@
       </span>
 
       <el-button type="info" @click="goToInfoPage">
-        <span v-if="resident"
+        <span v-if="resident" style="font-size: 16px"
           >{{ resident.bedNumber }} {{ resident.info.name }}</span
         >
-        <span v-else>無床號 #</span>
+        <span v-else style="font-size: 16px">無床號 #</span>
       </el-button>
 
       <button
@@ -57,6 +57,12 @@
         {{
           resident.thorDevices.length > 1 ? resident.thorDevices[1].name : "無"
         }}
+      </div>
+      <div
+        v-bind:class="[activeParisDevice.isConnected ? 'active' : 'inactive']"
+      >
+        Paris:
+        {{ resident.pairsDevice != null ? resident.pairsDevice.name : "無" }}
       </div>
     </div>
     <!-- <div class="icon-people">
@@ -138,19 +144,28 @@
         </div> -->
       </el-col>
       <el-col :span="5">
-        <div
-          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr == None"
+        <!-- <div
+          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr == -1"
         >
           <svg-icon icon-class="ble_connected" class-name="icon-wrapper" />
-        </div>
+        </div> -->
         <div
           v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != None"
         >
-          <svg-icon icon-class="user" class-name="icon-wrapper" />
+          <svg-icon icon-class="thor_connected" class-name="icon-wrapper" />
           <!-- <app-icon name="user" size="l" fill></app-icon> -->
         </div>
         <div v-else>
-          <svg-icon icon-class="ble_disconected" class-name="icon-wrapper" />
+          <svg-icon icon-class="thor_disconnected" class-name="icon-wrapper" />
+        </div>
+        <div v-if="activeParisDevice.isConnected">
+          <svg-icon icon-class="sleep" class-name="icon-wrapper" />
+        </div>
+        <div v-else>
+          <svg-icon
+            icon-class="offbed"
+            class-name="disconnected-icon-wrapper"
+          />
         </div>
       </el-col>
     </el-row>
@@ -175,6 +190,10 @@ export default {
         vitalSigns: null,
         name: null,
         address: null,
+        isConnected: false,
+      },
+      activeParisDevice: {
+        name: null,
         isConnected: false,
       },
       activeDeviceIndex: null,
@@ -230,6 +249,10 @@ export default {
           this.activeDeviceIndex = i;
           break;
         }
+      }
+      if (this.resident.pairsDevice != null) {
+        this.activeParisDevice.isConnected =
+          this.resident.pairsDevice.isConnected;
       }
     },
     getActiveDeviceIndex() {
@@ -338,15 +361,6 @@ export default {
   float: right;
   font-size: 36px;
 }
-
-.connect-panel {
-  color: #36a3f7;
-  margin-top: 50px;
-  margin-left: 15px;
-  padding: 3px 3px;
-  font-size: 82px;
-}
-
 .icon-thor:hover {
   color: #36a3f7;
 }
@@ -367,7 +381,16 @@ export default {
 
   height: 5em;
   width: 4em;
-  margin-top: 50px;
+  margin-top: 5px;
+  margin-left: 10px;
+}
+
+.disconnected-icon-wrapper {
+  color: gray;
+
+  height: 5em;
+  width: 4em;
+  margin-top: 5px;
   margin-left: 10px;
 }
 </style>

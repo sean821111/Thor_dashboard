@@ -14,6 +14,7 @@
     "test:ci": "npm run lint && npm run test:unit"
   },
   "dependencies": {
+    "apexcharts": "^3.27.3",
     "axios": "^0.21.1",
     "core-js": "3.6.5",
     "echarts": "4.2.1",
@@ -33,9 +34,11 @@
     "vue-crono": "^2.0.9",
     "vue-echarts": "^6.0.0-rc.5",
     "vue-property-decorator": "^9.1.2",
+    "vue-radial-progress": "^0.3.2",
     "vue-router": "3.0.6",
     "vue-slide-bar": "^1.2.0",
     "vue-sse": "^2.2.0",
+    "vue3-apexcharts": "^1.4.0",
     "vuex": "3.1.0",
     "xlsx": "^0.17.0"
   },
