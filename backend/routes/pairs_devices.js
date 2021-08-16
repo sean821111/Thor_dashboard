@@ -133,7 +133,6 @@ router.put('/battery/:deviceName', (req, res, next) => {
         });
 });
 
-var cnt = 0;
 router.put('/raw/data/:deviceName', (req, res, next) => {
     let deviceName = req.params.deviceName;
     PairsDevice.updateOne({ name: deviceName }, 
@@ -145,7 +144,7 @@ router.put('/raw/data/:deviceName', (req, res, next) => {
                 console.log(result);
                 var message = {
                     name: req.params.deviceName,
-                    rawData: req.body.vitalSigns
+                    rawData: req.body.rawData
                 }
                 deviceUpdate.sse.send(message);
                 res.status(200).end();
