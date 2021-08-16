@@ -197,6 +197,7 @@ export default {
               if (!message.isConnected) {
                 this.$refs.residents[result.index].clearEvent();
               }
+              this.$refs.residents[result.index].updatePairsDevice();
             } else {
               if (message.isConnected) {
                 if (
@@ -229,10 +230,18 @@ export default {
             result.device.sleepEvent = message.sleepEvent;
           } else if ("resident" in message) {
             console.log("resident");
-            this.residents[result.index].thorDevices.splice(
-              result.deviceIndex,
-              1
-            );
+            if (result.deviceIndex == -1) {
+              this.residents[result.index].pairsDevice = null;
+              this.$refs.residents[result.index].updatePairsDevice();
+              this.$refs.residents[result.index].clearEvent();
+            } else {
+              this.residents[result.index].thorDevices.splice(
+                result.deviceIndex,
+                1
+              );
+              this.$refs.residents[result.index].resetActiveDevice();
+              this.$refs.residents[result.index].clearVitalSigns(result.deviceIndex);
+            }
           }
         }
       }

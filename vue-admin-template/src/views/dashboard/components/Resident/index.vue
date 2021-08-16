@@ -250,10 +250,6 @@ export default {
           break;
         }
       }
-      if (this.resident.pairsDevice != null) {
-        this.activeParisDevice.isConnected =
-          this.resident.pairsDevice.isConnected;
-      }
     },
     getActiveDeviceIndex() {
       return this.activeDeviceIndex;
@@ -261,6 +257,13 @@ export default {
     clearVitalSigns(index) {
       console.log("clearVitalSigns");
       this.resident.thorDevices[index].vitalSigns = this.initVitalSigns;
+    },
+    updatePairsDevice() {
+      if (this.resident.pairsDevice) {
+        this.activeParisDevice.isConnected = this.resident.pairsDevice.isConnected;
+      } else {
+        this.activeParisDevice.isConnected = false;
+      }
     },
     clearSleepEvent() {
       console.log("clearSleepEvent");
