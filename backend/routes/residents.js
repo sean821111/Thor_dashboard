@@ -11,28 +11,22 @@ router.post('/add', authenticated, async (req, res, next) => {
     console.log('Resident add: ' + JSON.stringify(req.body));
     let data = req.body;
 
-    let pairsDevice = await PairsDevice.findOne({ "name": data.pairsDeviceName });
-    // let thorDevice = await ThorDevice.findOne({ "name": data.thorDeviceName });
-    let thorDevices = await ThorDevice.find({ "name": { $in: data.thorDeviceNames } });
-
-    data['pairsDevice'] = null;
-    if (pairsDevice) {
-        if (pairsDevice.resident == null)
-            data['pairsDevice'] = pairsDevice._id;
-        else
-            return res.status(403).end('Pairs device already bind');
-    } else if (data.pairsDeviceName)
-        return res.status(404).end('Pairs device not found');
-    delete data['pairsDeviceName'];
-
-
+    let thorDevices = null, pairsDevice = null;
+    try {
+        thorDevices = await ThorDevice.find({ "name": { $in: data.thorDeviceNames } });
+        pairsDevice = await PairsDevice.findOne({ "name": data.pairsDeviceName });
+    } catch (err) {
+        console.log('Device find err: ' + err);
+        return next(err);
+    }
+    
     data['thorDevices'] = []
     if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
         for (var i = 0; i < thorDevices.length; ++i)
             data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(thorDevices[i].name), 1);
         return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
     }
-    for (var i = 0; i < thorDevices.length; ++i)
+    for (var i = 0; i < thorDevices.length; ++i) 
         if (thorDevices[i].resident != null)
             return res.status(403).end('Thor device already bind: ' + thorDevices[i].name);
 
@@ -56,8 +50,7 @@ router.post('/add', authenticated, async (req, res, next) => {
             next(err);
         } else if (resident) {
             console.log('Resident found: ' + resident);
-            res.status(403).end('Resident already exists');
-
+            res.status(403).end('Resident id number already exists');         
         } else {
             resident = new Resident(data);
             resident.save();
@@ -90,7 +83,7 @@ router.post('/add', authenticated, async (req, res, next) => {
 
             res.status(200).end();
         }
-    });
+    });    
 });
 
 router.delete('/:id', authenticated, (req, res, next) => {
@@ -101,37 +94,29 @@ router.delete('/:id', authenticated, (req, res, next) => {
         } else {
             if (result.n != 0) {
                 console.log(result); // Success
-
-                ThorDevice.updateMany({ resident: req.params.id },
-                    { $set: { resident: null } },
-                    (err, result2) => {
-                        console.log(result2);
+                ThorDevice.updateMany({ resident: req.params.id }, 
+                    { $set: { resident: null } }, 
+                    (err, result) => {
+                        console.log(result);
                         if (err) {
                             console.log('ThorDevice updateMany err: ' + err);
                             next(err);
-                        } else if (result2.ok) {
-                            res.status(200).end();
-                        } else {
-                            res.status(404).end('ThorDevice updateMany failed');
-
+                        } else if (result.ok) {
+                            PairsDevice.updateOne({ resident: req.params.id }, 
+                                { $set: { resident: null } }, 
+                                (err, result) => {
+                                    console.log(result);
+                                    if (err) {
+                                        console.log('PairsDevice updateOne err: ' + err);
+                                        next(err);
+                                    } else if (result.ok) {
+                                        res.status(200).end();
+                                    }
+                                }); 
                         }
-                    });
+                    }); 
 
-
-                PairsDevice.updateOne({ resident: req.params.id },
-                    { $set: { resident: null } },
-                    (err, result2) => {
-                        console.log(result2);
-                        if (err) {
-                            console.log('PairsDevice updateOne err: ' + err);
-                            next(err);
-                        } else if (result2.ok) {
-                            res.status(200).end();
-                        } else {
-                            res.status(404).end('PairsDevice updateOne failed');
-                        }
-                    });
-
+                
             } else {
                 res.status(404).end("Resident not found");
             }
@@ -145,55 +130,60 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
     try {
         resident = await Resident.findOne({ _id: req.params.id });
 
-    if (resident == null)
-        return res.status(404).end('Resident not found');
+        if (resident == null)
+            return res.status(404).end('Resident not found');  
 
-    if (resident.info.idNumber != data.info.idNumber) {
-        let checkIdNumber = await Resident.findOne({ 'info.idNumber': data.info.idNumber });
-        if (checkIdNumber)
-            return res.status(403).end('Resident id number already exists');
+        if (resident.info.idNumber != data.info.idNumber) {
+            let checkIdNumber = await Resident.findOne({ 'info.idNumber': data.info.idNumber });
+            if (checkIdNumber)
+                return res.status(403).end('Resident id number already exists'); 
+        }
+    } catch (err) {
+        console.log('Resident find err: ' + err);
+        return next(err);
     }
 
-    //console.log("resident " + JSON.stringify(resident));
-    let update = {
-        info: data.info,
-        health: data.health,
-        bedNumber: data.bedNumber,
-        remark: data.remark,
-        pairsDevice: data.pairsDevice,
-        thorDevice: data.thorDevice
+    let thorDevices = null, pairsDevice = null;
+    try {
+        thorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
+        pairsDevice = await PairsDevice.findOne({ name: data.pairsDeviceName });
+    } catch (err) {
+        console.log('Device find err: ' + err);
+        return next(err);
     }
 
-    let newPairsDevice = await PairsDevice.findOne({ name: data.pairsDeviceName });
-    if (newPairsDevice) {
-        if (newPairsDevice.resident == null) {
-            // Bind a new device.
-            update['pairsDevice'] = newPairsDevice._id;
-            newPairsDevice.resident = resident._id;
-            newPairsDevice.save();
-            var message = {
-                name: newPairsDevice.name,
-                resident: {
-                    _id: resident._id,
-                }
-            }
-            deviceUpdate.sse.send(message);
-        } else if (newPairsDevice.resident.equals(resident._id)) {
-            update['pairsDevice'] = newPairsDevice._id;
+    data['thorDevices'] = [];
+    if (data.thorDeviceNames.length > 0 && thorDevices.length != data.thorDeviceNames.length) {
+        for (var i = 0; i < thorDevices.length; ++i)
+            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(thorDevices[i].name), 1);
+        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
+    }
+    for (var i = 0; i < thorDevices.length; ++i) {
+        if (thorDevices[i].resident == null || thorDevices[i].resident.equals(resident._id)) {
+            data['thorDevices'].push(thorDevices[i]._id);
         } else {
             return res.status(403).end('Thor device already bind: ' + thorDevices[i].name);
         }
         
     }
 
-    if (resident.pairsDevice) {
-        let oldPairsDevice = await PairsDevice.findOne({ _id: resident.pairsDevice });
-        if (oldPairsDevice.name != data.pairsDeviceName) {
-            // Unbind device
-            oldPairsDevice.resident = null;
-            oldPairsDevice.save();
-            if (data.thorDeviceName == null) {
+    data['pairsDevice'] = null;
+    if (pairsDevice) {
+        if (pairsDevice.resident == null || pairsDevice.resident.equals(resident._id)) 
+            data['pairsDevice'] = pairsDevice._id;
+        else
+            return res.status(403).end('Pairs device already bind'); 
+    } else if (data.pairsDeviceName)
+        return res.status(404).end('Pairs device not found'); 
 
+    try {
+        let bindThorDevices = await ThorDevice.find({ _id: { $in: resident.thorDevices } });
+        for (var i = 0; i < bindThorDevices.length; ++i) {
+            let index = data.thorDeviceNames.indexOf(bindThorDevices[i].name);
+            if (index == -1) {
+                console.log("Unbind device: " + bindThorDevices[i].name);
+                bindThorDevices[i].resident = null;
+                bindThorDevices[i].save();
                 var message = {
                     name: bindThorDevices[i].name,
                     resident: null
@@ -203,28 +193,10 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
                 thorDevices = thorDevices.filter(device => device.name !== data.thorDeviceNames[index]);
             }
         }
-    }
-
-    let newThorDevices = await ThorDevice.find({ name: { $in: data.thorDeviceNames } });
-    update['thorDevices'] = [];
-    if (data.thorDeviceNames.length > 0 && newThorDevices.length != data.thorDeviceNames.length) {
-        for (var i = 0; i < newThorDevices.length; ++i)
-            data.thorDeviceNames.splice(data.thorDeviceNames.indexOf(newThorDevices[i].name), 1);
-        return res.status(404).end('Thor devices not found: ' + data.thorDeviceNames);
-    }
-    for (var i = 0; i < newThorDevices.length; ++i)
-        if (newThorDevices[i].resident != null && !newThorDevices[i].resident.equals(resident._id))
-            return res.status(403).end('Thor device already bind: ' + newThorDevices[i].name);
-
-    for (var i = 0; i < newThorDevices.length; ++i) {
-        var newThorDevice = newThorDevices[i];
-        if (newThorDevice.resident == null) {
-            // Bind a new device.
-            console.log("Bind device: " + newThorDevice.name);
-            update['thorDevices'].push(newThorDevice._id);
-            newThorDevice.resident = resident._id;
-            newThorDevice.save();
-
+        for (var i = 0; i < thorDevices.length; i++) {
+            console.log("Bind device: " + thorDevices[i].name);
+            thorDevices[i].resident = resident._id;
+            thorDevices[i].save();
             var message = {
                 name: thorDevices[i].name,
                 resident: {
@@ -266,20 +238,11 @@ router.put('/update/:id', authenticated, async (req, res, next) => {
         return next(err);
     }
 
-    Resident.updateOne({ _id: req.params.id, 'info.idNumber': data.info.idNumber },
-        { $set: update },
-        (err, result) => {
-            if (err) {
-                console.log('Resident updateOne err: ' + err);
-                next(err);
-            } else if (result.n != 0) {
-                res.status(200).end();
-            } else {
-                res.status(404).end('Resident update failed');
-            }
-        }
-    );
-
+    delete data['thorDeviceNames'];
+    delete data['pairsDeviceName'];
+    resident.set(data);
+    resident.save();
+    res.status(200).end();    
 });
 
 
@@ -293,13 +256,13 @@ router.get('/info/:id', authenticated, (req, res, next) => {
                 next(err);
             } else if (resident) {
                 console.log('Resident found: ' + resident);
-                res.status(200).json(resident);
+                res.status(200).json(resident);         
             } else {
                 console.log('Resident not found');
                 res.status(404).end('Resident not found');
             }
         }
-        );
+    );
 });
 
 router.get('/list', authenticated, (req, res, next) => {
@@ -313,13 +276,13 @@ router.get('/list', authenticated, (req, res, next) => {
                 next(err);
             } else if (residents) {
                 console.log('Resident found: ' + residents);
-                res.status(200).json(residents);
+                res.status(200).json(residents);         
             } else {
                 console.log('Resident not found');
                 res.status(404).end('Resident not found');
             }
         }
-        );
+    );
 });
 
 router.put('/raw/data/record/:id', (req, res, next) => {
@@ -327,12 +290,12 @@ router.put('/raw/data/record/:id', (req, res, next) => {
     let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
  
     // Create today record array if not exist.
-    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': { "$ne": today } },
-        { $push: { rawDataRecords: { day: today } } },
+    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': { "$ne": today } }, 
+        { $push: { rawDataRecords: {day: today} } },
         (err, result) => {
             if (err) {
                 console.log('Resident updateOne err: ' + err);
-                return next(err);
+                return next(err);   
             } else if (result.n != 0) {
                 console.log("Resident update result: ", result);
             } else {
@@ -343,7 +306,7 @@ router.put('/raw/data/record/:id', (req, res, next) => {
     );
 
     // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today },
+    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today }, 
         {
             $push: { 'rawDataRecords.$.records': { timestamp: timestamp, rawData: req.body.rawData } }
         },
@@ -411,12 +374,12 @@ router.put('/sleep/record/:id', (req, res, next) => {
     let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
 
     // Create today record array if not exist.
-    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': { "$ne": today } },
-        { $push: { sleepRecords: { day: today } } },
+    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': { "$ne": today } }, 
+        { $push: { sleepRecords: {day: today} } },
         (err, result) => {
             if (err) {
                 console.log('Resident updateOne err: ' + err);
-                return next(err);
+                return next(err);   
             } else if (result.n != 0) {
                 console.log("Resident update result: ", result);
             } else {
@@ -427,21 +390,21 @@ router.put('/sleep/record/:id', (req, res, next) => {
     );
 
     // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today },
+    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today }, 
         {
             $push: { 'sleepRecords.$.records': { timestamp: timestamp, event: req.body.event } }
         },
         (err, result) => {
             if (err) {
                 console.log('Resident update err: ' + err);
-                next(err);
+                next(err);   
             } else if (result.n != 0) {
                 console.log("Resident2 update result: ", result);
-                res.status(200).end();
+                res.status(200).end();   
             }
             else {
                 console.log("Residen2 update failed: ", result);
-                res.status(404).end('Resident not found');
+                res.status(404).end('Resident not found'); 
             }
         }
     );
@@ -492,59 +455,53 @@ router.get('/raw/data/record/:id', /*authenticated,*/ async (req, res, next) => 
     // let end  = new Date(req.body.end*1000);
     let start = new Date(req.body.start);
     let end = new Date(req.body.end);
-
+    
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-
+    
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
 
-
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
 
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "rawDataRecords": {
-                    "$filter": {
-                        "input": "$rawDataRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "rawDataRecords": {
+                "$filter": {
+                    "input": "$rawDataRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "rawDataRecords": {
-                    "$map": {
-                        "input": "$rawDataRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "rawDataRecords": {
+                "$map": {
+                    "input": "$rawDataRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$rawDataRecords"
         },
@@ -554,14 +511,14 @@ router.get('/raw/data/record/:id', /*authenticated,*/ async (req, res, next) => 
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$rawDataRecords.records" }
-            }
-
+                "output": { "$push" : "$rawDataRecords.records" }
+              }
+            
         }
-    ]);
+        ]);
 
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
         res.status(200).json([]);
     }
@@ -571,59 +528,53 @@ router.get('/raw/data/record/:id/:start/:end', /*authenticated,*/ async (req, re
     let id = mongoose.Types.ObjectId(req.params.id);
     let start = new Date(parseInt(req.params.start));
     let end = new Date(parseInt(req.params.end));
-
+    
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-
+    
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
 
-
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
 
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "rawDataRecords": {
-                    "$filter": {
-                        "input": "$rawDataRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "rawDataRecords": {
+                "$filter": {
+                    "input": "$rawDataRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "rawDataRecords": {
-                    "$map": {
-                        "input": "$rawDataRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "rawDataRecords": {
+                "$map": {
+                    "input": "$rawDataRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$rawDataRecords"
         },
@@ -633,14 +584,14 @@ router.get('/raw/data/record/:id/:start/:end', /*authenticated,*/ async (req, re
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$rawDataRecords.records" }
-            }
-
+                "output": { "$push" : "$rawDataRecords.records" }
+              }
+            
         }
-    ]);
+        ]);
 
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
         res.status(200).json([]);
     }
@@ -652,59 +603,53 @@ router.get('/sleep/record/:id', /*authenticated,*/ async (req, res, next) => {
     // let end  = new Date(req.body.end*1000);
     let start = new Date(req.body.start);
     let end = new Date(req.body.end);
-
+    
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-
+    
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
 
-
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
 
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "sleepRecords": {
-                    "$filter": {
-                        "input": "$sleepRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "sleepRecords": {
+                "$filter": {
+                    "input": "$sleepRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "sleepRecords": {
-                    "$map": {
-                        "input": "$sleepRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "sleepRecords": {
+                "$map": {
+                    "input": "$sleepRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$sleepRecords"
         },
@@ -714,14 +659,14 @@ router.get('/sleep/record/:id', /*authenticated,*/ async (req, res, next) => {
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$sleepRecords.records" }
-            }
-
+                "output": { "$push" : "$sleepRecords.records" }
+              }
+            
         }
-    ]);
+        ]);
 
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
         res.status(200).json([]);
     }
@@ -731,59 +676,53 @@ router.get('/sleep/record/:id/:start/:end', /*authenticated,*/ async (req, res, 
     let id = mongoose.Types.ObjectId(req.params.id);
     let start = new Date(parseInt(req.params.start));
     let end = new Date(parseInt(req.params.end));
-
+    
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-
+    
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    
 
-
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
 
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "sleepRecords": {
-                    "$filter": {
-                        "input": "$sleepRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "sleepRecords": {
+                "$filter": {
+                    "input": "$sleepRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "sleepRecords": {
-                    "$map": {
-                        "input": "$sleepRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "sleepRecords": {
+                "$map": {
+                    "input": "$sleepRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$sleepRecords"
         },
@@ -793,14 +732,14 @@ router.get('/sleep/record/:id/:start/:end', /*authenticated,*/ async (req, res, 
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$sleepRecords.records" }
-            }
-
+                "output": { "$push" : "$sleepRecords.records" }
+              }
+            
         }
-    ]);
+        ]);
 
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
         res.status(200).json([]);
     }
@@ -812,12 +751,12 @@ router.put('/vital/signs/record/:id', (req, res, next) => {
     let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
 
     // Create today record array if not exist.
-    Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': { "$ne": today } },
-        { $push: { vitalSignsRecords: { day: today } } },
+    Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': { "$ne": today } }, 
+        { $push: { vitalSignsRecords: {day: today} } },
         (err, result) => {
             if (err) {
                 console.log('Resident updateOne err: ' + err);
-                return next(err);
+                return next(err);   
             } else if (result.n != 0) {
                 console.log("Resident update result: ", result);
             } else {
@@ -828,21 +767,21 @@ router.put('/vital/signs/record/:id', (req, res, next) => {
     );
 
     // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': today },
+    Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': today }, 
         {
             $push: { 'vitalSignsRecords.$.records': { timestamp: timestamp, vitalSigns: req.body.vitalSigns } }
         },
         (err, result) => {
             if (err) {
                 console.log('Resident update err: ' + err);
-                next(err);
+                next(err);   
             } else if (result.n != 0) {
                 console.log("Resident2 update result: ", result);
-                res.status(200).end();
+                res.status(200).end();   
             }
             else {
                 console.log("Residen2 update failed: ", result);
-                res.status(404).end('Resident not found');
+                res.status(404).end('Resident not found'); 
             }
         }
     );
@@ -855,53 +794,47 @@ router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
 
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
-
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
+    
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "vitalSignsRecords": {
-                    "$filter": {
-                        "input": "$vitalSignsRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "vitalSignsRecords": {
+                "$filter": {
+                    "input": "$vitalSignsRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "vitalSignsRecords": {
-                    "$map": {
-                        "input": "$vitalSignsRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "vitalSignsRecords": {
+                "$map": {
+                    "input": "$vitalSignsRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$vitalSignsRecords"
         },
@@ -911,14 +844,14 @@ router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$vitalSignsRecords.records" }
-            }
-
+                "output": { "$push" : "$vitalSignsRecords.records" }
+              }
+            
         }
-    ]);
-
+        ]);
+        
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
         res.status(200).json([]);
     }
@@ -930,59 +863,53 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
     // let end  = new Date(req.body.end*1000);
     let start = new Date(req.body.start);
     let end = new Date(req.body.end);
-
+    
     let startDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
     let endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
 
     console.log("--------------" + JSON.stringify(req.body));
-
-    console.log("id: " + id);
-    console.log("start: " + start.toISOString());
-    console.log("end: " + end.toISOString());
-    console.log("startDay: " + startDay.toISOString());
-    console.log("endDay: " + endDay.toISOString());
-
+    
+    console.log("id: "+ id);
+    console.log("start: "+ start.toISOString());
+    console.log("end: "+ end.toISOString());
+    console.log("startDay: "+ startDay.toISOString());
+    console.log("endDay: "+ endDay.toISOString());
+    
     let filtered = await Resident.aggregate([
-        { $match: { _id: id } },
-        {
-            $project: {
-                "vitalSignsRecords": {
-                    "$filter": {
-                        "input": "$vitalSignsRecords",
-                        "cond": {
-                            "$and": [
-                                { "$gte": ["$$this.day", startDay] },
-                                { "$lte": ["$$this.day", endDay] }
-                            ]
-                        }
-                    }
+        { $match:  { _id: id } },
+        { $project: {
+            "vitalSignsRecords": {
+                "$filter": {
+                    "input": "$vitalSignsRecords",
+                    "cond": {
+                    "$and": [
+                        { "$gte": [ "$$this.day", startDay ] },
+                        { "$lte": [ "$$this.day", endDay ] }
+                    ]}
                 }
             }
-        },
-        {
-            $project: {
-                "vitalSignsRecords": {
-                    "$map": {
-                        "input": "$vitalSignsRecords",
-                        "as": "a1",
-                        "in": {
-                            "records": {
-                                "$filter": {
-                                    "input": "$$a1.records",
-                                    "cond": {
-                                        "$and": [
-                                            { "$gte": ["$$this.timestamp", start] },
-                                            { "$lt": ["$$this.timestamp", end] }
-                                        ]
-                                    }
-                                }
-
+        }},
+        { $project: {
+            "vitalSignsRecords": {
+                "$map": {
+                    "input": "$vitalSignsRecords",
+                    "as": "a1",
+                    "in": {
+                        "records": {
+                            "$filter": {
+                                "input": "$$a1.records",
+                                "cond": {
+                                "$and": [
+                                    { "$gte": [ "$$this.timestamp", start ] },
+                                    { "$lt": [ "$$this.timestamp", end ] }
+                                ]}
                             }
+                                
                         }
                     }
                 }
             }
-        },
+        }},
         {
             $unwind: "$vitalSignsRecords"
         },
@@ -992,36 +919,53 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
         {
             $group: {
                 "_id": null,
-                "output": { "$push": "$vitalSignsRecords.records" }
-            }
-
+                "output": { "$push" : "$vitalSignsRecords.records" }
+              }
+            
         }
-    ]);
+        ]);
 
     if (filtered.length > 0) {
-        res.status(200).json(filtered[0].output);
+        res.status(200).json(filtered[0].output);  
     } else {
-        res.status(200).end([]);
+        res.status(200).end([]);  
     }
 });
 
 var schedule = require('node-schedule');
 
-function scheduleCronstyle() {
+function scheduleCronstyle(){
     schedule.scheduleJob('0 0 0 * * *', () => {
         console.log('scheduleCronstyle:' + new Date());
         expireTime = new Date() - 3 * 365 * 24 * 60 * 60 * 1000;  // 3 years
         Resident.updateMany({ 'vitalSignsRecords.0': { $exists: true } },
-            {
+            { 
                 $pull: { vitalSignsRecords: { day: { $lt: expireTime } } }
-            }, (err, result) => {
-                if (err)
+            }, (err, result) => { 
+                if (err) 
                     console.log(err);
                 else
                     console.log("Delete expired record result: ", result);
             });
-    });
-
+        Resident.updateMany({ 'rawDataRecords.0': { $exists: true } },
+            { 
+                $pull: { rawDataRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => { 
+                if (err) 
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+        Resident.updateMany({ 'sleepRecords.0': { $exists: true } },
+            { 
+                $pull: { sleepRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => { 
+                if (err) 
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+    }); 
 }
 
 scheduleCronstyle();
