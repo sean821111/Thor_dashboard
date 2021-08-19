@@ -1,7 +1,21 @@
 import Vue from 'vue';
 // import App from './App.vue';
-import views from '/heatmap/index.vue';
+// import views from '/heatmap/index.vue';
+
 import heatmap from 'vue-heatmapjs';
+import * as filters from './filters' // global filters
+
+
+
+// register global utility filters
+Object.keys(filters).forEach(key => {
+  Vue.filter(key, filters[key])
+})
+
+new Vue({
+  el: '#app',
+  render: h => h(App)
+});
 
 Vue.use(heatmap, {
   // Fired on every click and mousemove.
@@ -11,9 +25,4 @@ Vue.use(heatmap, {
     // Send the data here.
     logUserInteractions(data);
   }
-});
-
-new Vue({
-  el: '#app',
-  render: h => h(App)
 });

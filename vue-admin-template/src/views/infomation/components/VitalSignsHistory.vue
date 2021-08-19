@@ -13,7 +13,12 @@
 
     <panel-group @handleSetLineChartData="handleSetLineChartData" />
     <el-row>
-      <date-select @dateSubmit="dateSubmit" @handleDownload="handleDownload" />
+      <el-col>
+        <date-select
+          @dateSubmit="dateSubmit"
+          @handleDownload="handleDownload"
+        />
+      </el-col>
     </el-row>
     <el-row
       v-if="this.isDate"
@@ -201,7 +206,7 @@ export default {
           var temp = Math.round(element.vitalSigns.temp * 10) / 10;
           var spo2 = element.vitalSigns.spo2;
 
-          var pi = Math.round(element.vitalSigns.temp * 100) / 100;
+          var pi = Math.round(element.vitalSigns.pi * 100) / 100;
           lineChartData.hr.val[timeIndex] = hr;
           lineChartData.temp.val[timeIndex] = temp;
           lineChartData.spo2.val[timeIndex] = spo2;

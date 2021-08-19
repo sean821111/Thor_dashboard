@@ -37,20 +37,19 @@ export function updateResident(residentId, resident) {
   })
 }
 
-export function getResidentSleepRecord(residentId, dateRange) {
+export function getResidentSleepRecord(residentId, start, end) {
   return request({
-      url: 'residents/sleep/record/' + residentId,
-      method: 'get',
-      data: dateRange
-    })
-  }  
-
-export function getResidentVitalSignsRecord(residentId, start, end){
-  return request({
-    url: 'residents/vital/signs/record/' + residentId + '/' + start + '/' + end, 
+    url: 'residents/sleep/record/' + residentId + '/' + start + '/' + end,
     method: 'get',
   })
-}  
+}
+
+export function getResidentVitalSignsRecord(residentId, start, end) {
+  return request({
+    url: 'residents/vital/signs/record/' + residentId + '/' + start + '/' + end,
+    method: 'get',
+  })
+}
 
 
 

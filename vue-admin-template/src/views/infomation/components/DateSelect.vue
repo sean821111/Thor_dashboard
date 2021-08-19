@@ -1,0 +1,174 @@
+<template>
+  <div>
+    <!-- <div class="block">
+        <span class="demonstration">默认</span>
+        {{value6}}
+        <el-date-picker
+        v-model="value6"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期">
+        </el-date-picker>
+    </div> -->
+    <div style="margin-bottom: 10px">
+      <el-button
+        type="info"
+        @click="showWeek"
+        style="font-szie: 18px; font-weight: bold"
+        >週</el-button
+      >
+      <el-button
+        type="info"
+        @click="showDate"
+        style="font-szie: 18px; font-weight: bold"
+        >日</el-button
+      >
+    </div>
+    <div style="margin-bottom: 10px">
+      <el-button
+        type="primary"
+        icon="el-icon-arrow-left"
+        @click="last"
+        style="margin-right: 5px"
+      ></el-button>
+
+      <el-date-picker
+        v-if="isDate"
+        v-model="dateSelect"
+        align="right"
+        type="date"
+        placeholder="選擇日期"
+        :picker-options="pickerOptions1"
+      >
+      </el-date-picker>
+      <el-date-picker
+        v-else
+        v-model="dateSelect"
+        type="week"
+        format="yyyy 第 WW 週"
+        placeholder="選擇週"
+      >
+      </el-date-picker>
+      <el-button
+        type="primary"
+        icon="el-icon-arrow-right"
+        @click="next"
+        style="margin-left: 5px"
+      ></el-button>
+      <el-button type="primary" @click="dateSubmit" style="font-size: 16px"
+        >確認</el-button
+      >
+      <el-button
+        type="primary"
+        icon="el-icon-download"
+        style="font-size: 16px"
+        @click="handleDownload"
+      >
+        匯出資料
+      </el-button>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      pickerOptions1: {
+        disabledDate(time) {
+          return time.getTime() > Date.now();
+        },
+        shortcuts: [
+          {
+            text: "今天",
+            onClick(picker) {
+              picker.$emit("pick", new Date());
+            },
+          },
+          {
+            text: "昨天",
+            onClick(picker) {
+              const date = new Date();
+              date.setTime(date.getTime() - 3600 * 1000 * 24);
+              picker.$emit("pick", date);
+            },
+          },
+        ],
+      },
+      isDate: true,
+      isWeek: false,
+      dateSelect: new Date(),
+    };
+  },
+  methods: {
+    dateSubmit() {
+      if (this.dateSelect == "") {
+        this.$message({
+          message: "請選擇時間！",
+          type: "warning",
+        });
+      } else if (this.isDate) {
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+      } else {
+        this.dateSelect = this.getSunday(this.dateSelect, "this");
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+        console.log("submit on first day of the week:" + this.dateSelect);
+      }
+    },
+    next() {
+      if (this.dateSelect == "") {
+        this.$message({
+          message: "請選擇時間！",
+          type: "warning",
+        });
+      } else if (this.isDate) {
+        var nextDay = new Date(this.dateSelect);
+        nextDay.setDate(nextDay.getDate() + 1);
+        this.dateSelect = nextDay;
+        console.log("next date select: " + this.dateSelect);
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+      } else {
+        this.dateSelect = this.getSunday(this.dateSelect, "next");
+        console.log("next week select: " + new Date(this.dateSelect));
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+      }
+    },
+    last() {
+      if (this.dateSelect == "") {
+        this.$message({
+          message: "請選擇時間！",
+          type: "warning",
+        });
+      } else if (this.isDate) {
+        var lastDay = new Date(this.dateSelect);
+        lastDay.setDate(lastDay.getDate() - 1);
+        this.dateSelect = lastDay;
+        console.log("last date select: " + this.dateSelect);
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+      } else {
+        this.dateSelect = this.getSunday(this.dateSelect, "last");
+        console.log("last week select: " + new Date(this.dateSelect));
+        this.$emit("dateSubmit", this.isDate, this.dateSelect);
+      }
+    },
+    getSunday(d, select) {
+      d = new Date(d);
+      var day = d.getDay(); //Sun indicate 0 and Mon indicate 1 ...
+      if (select == "this") var diff = d.getDate() - day;
+      else if (select == "next") var diff = d.getDate() - day + 7;
+      else if (select == "last") var diff = d.getDate() - day - 7;
+      return new Date(d.setDate(diff));
+    },
+    showWeek() {
+      this.isDate = false;
+    },
+    showDate() {
+      this.isDate = true;
+    },
+    handleDownload() {
+      this.$emit("handleDownload");
+    },
+  },
+};
+</script>

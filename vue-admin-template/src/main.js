@@ -14,6 +14,7 @@ import router from './router'
 
 import '@/icons' // icon
 import '@/permission' // permission control
+import * as filters from './filters' // global filters
 import permission from '@/directive/permission/index.js'
 
 // in main.js
@@ -43,6 +44,12 @@ Vue.use(VueSSE);
 
 Vue.directive('permission', permission)
 Vue.config.productionTip = false
+
+// register global utility filters
+Object.keys(filters).forEach(key => {
+  Vue.filter(key, filters[key])
+})
+
 
 new Vue({
   el: '#app',

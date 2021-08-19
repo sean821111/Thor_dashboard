@@ -3,11 +3,11 @@
 </template>
 
 <script>
-import NewResident from './component/NewResident'
+import NewResident from "./components/NewResident";
 
 export default {
-  name: 'AddNewResident',
-  components: { NewResident }
-}
+  name: "AddNewResident",
+  components: { NewResident },
+};
 </script>
 

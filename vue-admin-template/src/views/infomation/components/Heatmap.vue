@@ -1,91 +1,69 @@
 <template>
   <div margin-width="25%" class="dashboard-editor-container">
-    <el-row>
-      <el-col
-        ><div>
-          <h1>{{ this.bedNum }}床壓力分佈圖</h1>
-        </div></el-col
-      >
-    </el-row>
+    <h1>{{ this.bedNum }}床壓力分佈圖</h1>
 
     <el-row style="margin-bottom: 32px">
       <el-col :xs="18" :sm="15" :lg="10">
-        <div id="heatmap" class="heatmapjs-container">
-          <div class="pillow-wrapper"></div>
-        </div>
+        <div id="heatmap" class="heatmapjs-container"></div>
       </el-col>
-      <el-col :xs="5" :sm="5" :lg="5">
-        <!-- <VueSlideBar
-            v-model="slider.value"
-            :data="slider.data"
-            :range="slider.range"
-            :line-height="30"
-            :processStyle="slider.processStyle"
-            :draggable="false"
-          /> -->
+      <!-- <el-col :xs="5" :sm="5" :lg="5">
         <radial-bar
           :chart-title="radialChartTitle"
           :chart-value="sleepQuality"
         />
-      </el-col>
-    </el-row>
-    <el-row> </el-row>
-    <el-row :gutter="32">
-      <el-col class="card-panel">
-        <div class="card-panel-text"></div>
-      </el-col>
-      <!-- <el-col :xs="24" :sm="24" :lg="8">
-        <div class="chart-wrapper">
-          <paris-bar-chart />
-        </div>
-      </el-col>
-      <el-col :xs="24" :sm="24" :lg="8">
-        <div class="chart-wrapper">
-          <paris-bar-chart />
-        </div>
-      </el-col>
-      <el-col :xs="24" :sm="24" :lg="8">
-        <div class="chart-wrapper">
-          <paris-bar-chart />
-        </div>
       </el-col> -->
     </el-row>
+    <!-- <el-row :gutter="24">
+      <el-col :xs="4" :sm="4" :lg="4">
+        <div class="card-panel">
+          <div class="card-panel-icon-wrapper">
+            <svg-icon icon-class="sleep" class-name="card-panel-icon" />
+          </div>
+          <div class="card-panel-description">
+            <div class="card-panel-text">進床</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="4" :sm="4" :lg="4">
+        <div class="card-panel">
+          <div class="card-panel-icon-wrapper">
+            <svg-icon icon-class="offbed" class-name="card-panel-icon" />
+          </div>
+          <div class="card-panel-description">
+            <div class="card-panel-text">離床</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="4" :sm="4" :lg="4">
+        <div class="card-panel">
+          <div class="card-panel-icon-wrapper">
+            <svg-icon icon-class="user" class-name="card-panel-icon" />
+          </div>
+          <div class="card-panel-description">
+            <div class="card-panel-text">翻身</div>
+          </div>
+        </div>
+      </el-col>
+    </el-row> -->
   </div>
 </template>
 
 
 <script>
 import Heatmap from "heatmap.js";
-import { getResidentInfo } from "@/api/resident";
+import { getResidentInfo, getResidentSleepRecord } from "@/api/resident";
 import RadialBar from "./RadialBar";
-import ParisBarChart from "./ParisBarChart";
-
 // We store the reference to the SSE client out here
 // so we can access it from other methods
 let sseClient;
-
-var barChartData = {
-  times: {
-    chartOption: {
-      title: "翻身次數",
-      unit: "times",
-      color: "#40c9c6",
-      areaColor: "#a8f0ef",
-    },
-    val: [1, 2, 3, 4, 5],
-    timeline: ["Mon", "Tue", "Wed", "Thr", "Fri"],
-  },
-};
 
 export default {
   name: "Heatmap",
   components: {
     RadialBar,
-    ParisBarChart,
   },
   data() {
     return {
-      barChartData: barChartData.times,
       bedNum: "",
       deviceName: null,
       radialChartTitle: "睡眠品質",
@@ -155,26 +133,28 @@ export default {
       getResidentInfo(this.residentId).then((response) => {
         this.bedNum = response.data.bedNumber;
         this.deviceName = response.data.pairsDevice.name;
+        console.log("get resiednt bedNum : " + this.bedNum);
       });
     },
     initData() {
       this.heatmapInstance = Heatmap.create({
         container: document.getElementById("heatmap"),
-        radius: 80,
+        radius: 70,
         blur: 0.7,
       });
-      console.log("this.heatmapInstance " + this.heatmapInstance);
       var points = [];
 
       getResidentInfo(this.residentId).then((response) => {
         if (response.data.pairsDevice != null) {
           this.pressureData = response.data.pairsDevice.rawData;
-          console.log("mounted paris data: " + this.pressureData);
+          // Mock data, maximum value is 2.5
+          // this.pressureData = [
+          //   1, 2, 1, 1, 2, 0, 5, 1, 1, 1.4, 1.4, 1.4, 2.5, 0, 0.5,
+          // ];
           for (var i = 2; i > -1; i--) {
             for (var j = 0; j < 5; j++) {
               var index = i * 5 + j;
 
-              console.log("index " + index + ": " + this.pressureData[index]);
               var point = {
                 x: (j + 1) * 80,
                 y: (i + 1) * 80,
@@ -200,7 +180,6 @@ export default {
 
       for (var i = 2; i > -1; i--) {
         for (var j = 0; j < 5; j++) {
-          console.log("index " + index + ": " + data);
           var point = {
             x: (j + 1) * 80,
             y: (i + 1) * 80,
@@ -257,35 +236,54 @@ export default {
   height: 320px;
   background-color: antiquewhite;
   margin-left: 5%;
-  border-left: 80px solid rgb(231, 186, 127);
+  border-left: 40px solid rgb(231, 186, 127);
   /* border-color: rgba(0, 0, 0, 0.05); */
   box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.5);
 }
 .radial-bar-wrapper {
   margin-left: 5%;
 }
+.card-panel-icon-wrapper {
+  color: #fff;
+
+  float: left;
+  margin: 14px 0 0 14px;
+  padding: 16px;
+  transition: all 0.38s ease-out;
+  border-radius: 6px;
+}
+
 .card-panel {
+  height: 108px;
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+  color: #666;
   background: #fff;
   box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.05);
 }
+.card-panel-icon {
+  float: left;
+  font-size: 48px;
+  color: #36a3f7;
+}
 .card-panel-text {
+  float: right;
+  font-weight: bold;
+  margin: 26px;
+  margin-left: 0px;
   line-height: 18px;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 18px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 20px;
   margin-bottom: 12px;
 }
-.vue-slide-bar-process {
-  /* position: absolute; */
-  border-radius: 15px;
-  /* transition: all 0s; */
-  /* z-index: 1; */
-  /* width: 0; */
-  /* height: 100%; */
-  /* top: 0; */
-  /* left: 0; */
-  /* will-change: width; */
-  /* background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%) !important; */
+.card-panel-content {
+  font-size: 24px;
+  float: right;
+  font-weight: bold;
+  margin: 26px;
+  margin-left: 0px;
 }
 .header-container {
   color: white;

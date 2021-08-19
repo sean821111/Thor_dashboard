@@ -3,11 +3,11 @@
 </template>
 
 <script>
-import EditInfo from './component/EditInfo'
+import EditInfo from "./components/EditInfo";
 
 export default {
-  name: 'EditForm',
-  components: { EditInfo }
-}
+  name: "EditForm",
+  components: { EditInfo },
+};
 </script>
 
