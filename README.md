@@ -3,7 +3,9 @@ The integrated dashboard for monitor vital signs and sleeping quality.
 
 ## Description
 There are two devices, Thor and Paris(Wistron VCC copyright) transmit data by BLE gateway.
+<br>
 Thor, an ear type wearable device for monitor four medical index, heart rate, temperature, SpO2 and perfusion index.
+<br>
 Paris, pressure pad for measure the sleeping quality and analyse sleeping event.
 
 ![Thor_dathaboard_main](https://imgur.com/iMJFy3N.png)
