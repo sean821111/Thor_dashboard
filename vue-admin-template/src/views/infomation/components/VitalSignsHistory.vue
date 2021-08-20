@@ -207,6 +207,13 @@ export default {
           var spo2 = element.vitalSigns.spo2;
 
           var pi = Math.round(element.vitalSigns.pi * 100) / 100;
+          if (hr <= 0) {
+            hr = "";
+          }
+          if (spo2 < 0) {
+            spo2 = "";
+            pi = "";
+          }
           lineChartData.hr.val[timeIndex] = hr;
           lineChartData.temp.val[timeIndex] = temp;
           lineChartData.spo2.val[timeIndex] = spo2;

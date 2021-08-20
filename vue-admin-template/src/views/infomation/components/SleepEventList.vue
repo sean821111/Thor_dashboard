@@ -2,7 +2,7 @@
   <div class="app-container">
     <h2>睡眠數據</h2>
 
-    <date-select @dateSubmit="dateSubmit" />
+    <date-select @dateSubmit="dateSubmit" @handleDownload="handleDownload" />
 
     <el-table
       :key="tableKey"
@@ -27,7 +27,7 @@
       <el-table-column label="入睡時間" min-width="150px" align="center">
         <template slot-scope="{ row }">
           <span>{{
-            (row.sleepTimestamp * 1000) | parseTime("{y}-{m}-{d} {h}:{i}")
+            row.sleepTimestamp | parseTime("{y}-{m}-{d} {h}:{i}")
           }}</span>
         </template>
       </el-table-column>
@@ -38,14 +38,14 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="淺眠時間(秒)" width="120px" align="center">
+      <el-table-column label="淺眠比例(%)" width="120px" align="center">
         <template slot-scope="{ row }">
-          <span>{{ row.lightSleepTime }}</span>
+          <span>{{ row.lightSleepRatio }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="深睡時間(秒)" width="120px" align="center">
+      <el-table-column label="深眠比例(％)" width="120px" align="center">
         <template slot-scope="{ row }">
-          <span>{{ row.deepSleepTime }}</span>
+          <span>{{ row.deepSleepRatio }}</span>
         </template>
       </el-table-column>
       <el-table-column label="翻身次數" width="120px" align="center">
@@ -193,7 +193,9 @@ export default {
           filename = new Date(this.recordStart).format("yyyy-MM-dd");
           "-" + new Date(this.recordEnd).format("yyyy-MM-dd") + " SleepRecord";
         }
-        const data = exportFormat(this.listData);
+        const data = this.exportFormat(this.listData);
+        console.log("export csv:" + data);
+
         excel.export_json_to_excel({
           header: tHeader,
           data,
@@ -206,14 +208,38 @@ export default {
     exportFormat(dataArray) {
       var data = [];
       for (var i = 0; i < dataArray.length; i++) {
+        var getInBedTimestamp;
+        var getOutOffBedTimestamp;
+        var sleepTimestamp;
+        if (dataArray[i].getInBedTimestamp == 0) {
+          getInBedTimestamp = "null";
+        } else {
+          getInBedTimestamp = new Date(
+            dataArray[i].getInBedTimestamp * 1000
+          ).format("yyyy-MM-dd-hh:mm");
+        }
+        if (dataArray[i].getOutOffBedTimestamp == 0) {
+          getOutOffBedTimestamp = "null";
+        } else {
+          getOutOffBedTimestamp = new Date(
+            dataArray[i].getOutOffBedTimestamp * 1000
+          ).format("yyyy-MM-dd-hh:mm");
+        }
+        if (dataArray[i].sleepTimestamp == 0) {
+          sleepTimestamp = "null";
+        } else {
+          sleepTimestamp = new Date(dataArray[i].sleepTimestamp * 1000).format(
+            "yyyy-MM-dd-hh:mm"
+          );
+        }
         data.push([
-          dataArray.num[i],
-          dataArray.getInBedTimestamp[i].format("yyyy-MM-dd-hh:mm"),
-          dataArray.getOutOffBedTimestamp[i].format("yyyy-MM-dd-hh:mm"),
-          dataArray.sleepTimestamp[i].format("yyyy-MM-dd-hh:mm"),
-          dataArray.turnOverTimes[i],
-          dataArray.lightSleepTime[i],
-          dataArray.deepSleepTime[i],
+          dataArray[i].num,
+          getInBedTimestamp,
+          sleepTimestamp,
+          getOutOffBedTimestamp,
+          dataArray[i].lightSleepRatio,
+          dataArray[i].deepSleepRatio,
+          dataArray[i].turnOverRatio,
         ]);
       }
       return data;
@@ -234,14 +260,16 @@ export default {
       }
 
       for (var i in sleepIntervals) {
+        var lightSleepTime = 0;
+        var deepSleepTime = 0;
         let analysis = {
           num: 0,
           getInBedTimestamp: 0,
           getOutOffBedTimestamp: 0,
           sleepTimestamp: 0,
           turnOverTimes: 0,
-          lightSleepTime: 0,
-          deepSleepTime: 0,
+          lightSleepRatio: 0,
+          deepSleepRatio: 0,
         };
         analysis.num = parseInt(i) + 1;
         let checkPoint = 0,
@@ -256,7 +284,7 @@ export default {
             // Not asleep.
             if (analysis.sleepTimestamp == 0) {
               diffTime = sleepIntervals[i][j].timestamp - checkPoint;
-              console.log("Nonsleep diffTime = " + diffTime);
+              // console.log("Nonsleep diffTime = " + diffTime);
               if (diffTime > 300) {
                 checkPoint += 300;
                 analysis.sleepTimestamp = checkPoint;
@@ -265,13 +293,13 @@ export default {
             // Fall asleep.
             if (analysis.sleepTimestamp != 0) {
               diffTime = sleepIntervals[i][j].timestamp - checkPoint;
-              console.log("getOutOffBed diffTime = " + diffTime);
+              // console.log("getOutOffBed diffTime = " + diffTime);
               if (diffTime > 600) {
                 // Deep sleep
-                analysis.deepSleepTime += diffTime;
+                deepSleepTime += diffTime;
               } else {
                 // Light sleep
-                analysis.lightSleepTime += diffTime;
+                lightSleepTime += diffTime;
               }
             }
           } else {
@@ -293,19 +321,36 @@ export default {
               // Deep sleep
               if (diffTime > 600) {
                 let count = parseInt(diffTime / 600);
-                analysis.deepSleepTime += count * 600;
+                deepSleepTime += count * 600;
                 checkPoint += count * 600;
                 diffTime = sleepIntervals[i][j].timestamp - checkPoint;
               }
               // Light sleep
               if (diffTime > 0) {
-                analysis.lightSleepTime += 600;
+                lightSleepTime += 600;
                 checkPoint += 600;
               }
             }
           }
         }
+        if (
+          analysis.getOutOffBedTimestamp != 0 &&
+          analysis.sleepTimestamp != 0
+        ) {
+          var timeOnbed =
+            parseInt(analysis.getOutOffBedTimestamp) -
+            parseInt(analysis.sleepTimestamp);
+          console.log("lightSleepTime: " + lightSleepTime);
 
+          console.log("timeOnbed: " + timeOnbed);
+          analysis.lightSleepRatio = Math.round(
+            (lightSleepTime / timeOnbed) * 100
+          );
+          analysis.deepSleepRatio = 100 - analysis.lightSleepRatio;
+        } else {
+          analysis.lightSleepRatio = 0;
+          analysis.deepSleepRatio = 0;
+        }
         this.sleepAnalysises.unshift(analysis);
       }
     },
