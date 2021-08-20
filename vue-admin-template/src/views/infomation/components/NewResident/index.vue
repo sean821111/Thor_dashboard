@@ -244,10 +244,6 @@ export default {
             console.log("response: " + JSON.stringify(response));
             this.$router.push({ path: this.redirect || "/dashboard" });
           });
-          this.$message({
-            message: "新增住民成功",
-            type: "success",
-          });
         } else {
           console.log("error submit!!");
           return false;
