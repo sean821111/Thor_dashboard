@@ -94,6 +94,7 @@
                   v-for="deviceName in validThorDeviceNames"
                   :key="deviceName"
                   :value="deviceName"
+                  :disabled="deviceName != 'null' && deviceName == thorDeviceNames[1] ? true : false"
                 >
                 </el-option>
               </el-select>
@@ -104,6 +105,7 @@
                   v-for="deviceName in validThorDeviceNames"
                   :key="deviceName"
                   :value="deviceName"
+                  :disabled="deviceName != 'null' && deviceName == thorDeviceNames[0] ? true : false"
                 >
                 </el-option>
               </el-select>
