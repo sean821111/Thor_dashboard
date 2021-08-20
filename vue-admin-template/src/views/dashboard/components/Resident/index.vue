@@ -3,13 +3,15 @@
   <el-card
     id="card"
     v-bind:class="[
-      activeDevice.isConnected ? 'device-card' : 'device-card card-disconnect',
+      activeDevice.isConnected || (resident.pairsDevice != null && resident.pairsDevice.isConnected) ? 
+        'device-card' : 'device-card card-disconnect',
     ]"
     :body-style="{ padding: '0px' }"
   >
     <div
       v-bind:class="[
-        activeDevice.isConnected ? 'card-title' : 'card-title title-disconnect',
+        activeDevice.isConnected || (resident.pairsDevice != null && resident.pairsDevice.isConnected) ? 
+          'card-title' : 'card-title title-disconnect',
       ]"
     >
       <span
@@ -59,7 +61,7 @@
         }}
       </div>
       <div
-        v-bind:class="[activeParisDevice.isConnected ? 'active' : 'inactive']"
+        v-bind:class="[resident.pairsDevice != null && resident.pairsDevice.isConnected ? 'active' : 'inactive']"
       >
         Paris:
         {{ resident.pairsDevice != null ? resident.pairsDevice.name : "無" }}
@@ -135,6 +137,20 @@
           </span>
         </div>
 
+        <div class="text">
+          <svg-icon icon-class="sleep_event" class-name="card-panel-icon" />
+          <span>睡眠事件</span>
+          <span style="float: right">
+            {{
+              
+              resident.pairsDevice == null || resident.pairsDevice.sleepEvent.event == NONE
+                ? "----"
+                : eventToString(resident.pairsDevice.sleepEvent.event)
+                  
+            }}
+          </span>
+        </div>
+
         <!-- <div class="text">
           <div class="icon-pi">
             <svg-icon icon-class="blood-pressure" class-name="card-panel-icon" />
@@ -158,7 +174,7 @@
         <div v-else>
           <svg-icon icon-class="thor_disconnected" class-name="icon-wrapper" />
         </div>
-        <div v-if="activeParisDevice.isConnected">
+        <div v-if="resident.pairsDevice != null && resident.pairsDevice.isConnected">
           <svg-icon icon-class="sleep" class-name="icon-wrapper" />
         </div>
         <div v-else>
@@ -192,10 +208,6 @@ export default {
         address: null,
         isConnected: false,
       },
-      activeParisDevice: {
-        name: null,
-        isConnected: false,
-      },
       activeDeviceIndex: null,
       initSleepEvent: null,
     };
@@ -219,6 +231,7 @@ export default {
       event: this.NONE,
     };
     this.activeDevice.vitalSigns = this.initVitalSigns;
+    this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
     this.resetActiveDevice();
   },
   methods: {
@@ -258,16 +271,20 @@ export default {
       console.log("clearVitalSigns");
       this.resident.thorDevices[index].vitalSigns = this.initVitalSigns;
     },
-    updatePairsDevice() {
-      if (this.resident.pairsDevice) {
-        this.activeParisDevice.isConnected = this.resident.pairsDevice.isConnected;
-      } else {
-        this.activeParisDevice.isConnected = false;
-      }
-    },
     clearSleepEvent() {
       console.log("clearSleepEvent");
       this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
+    },
+    eventToString(event) {
+      switch (event) {
+        case 0:
+          return "進床";
+        case 1:
+          return "離床";
+        case 2:
+          return "翻身";
+      }
+
     },
     goToInfoPage() {
       //if (this.device.resident) {

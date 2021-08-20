@@ -182,9 +182,8 @@ export default {
       return { device: null, index: -1, deviceIndex: -1 };
     },
     handleMessage(message) {
-      console.warn("Received a message w/o an event!", message);
-      if (message != "initial") {
-        console.log("Received a json");
+      if (message != "initial" && !("rawData" in message)) {
+        console.warn("Received a message w/o an event!", message);
         JSON.parse(JSON.stringify(message));
 
         let result = this.findResidentDevice(message.name);
@@ -195,9 +194,8 @@ export default {
             if (result.deviceIndex == -1) {
               // Pairs device
               if (!message.isConnected) {
-                this.$refs.residents[result.index].clearEvent();
+                this.$refs.residents[result.index].clearSleepEvent();
               }
-              this.$refs.residents[result.index].updatePairsDevice();
             } else {
               if (message.isConnected) {
                 if (
@@ -222,9 +220,6 @@ export default {
           } else if ("vitalSigns" in message) {
             console.log("vitalSigns");
             result.device.vitalSigns = message.vitalSigns;
-          } else if ("rawData" in message) {
-            console.log("rawData");
-            result.device.rawData = message.rawData;
           } else if ("sleepEvent" in message) {
             console.log("sleepEvent");
             result.device.sleepEvent = message.sleepEvent;
@@ -232,8 +227,6 @@ export default {
             console.log("resident");
             if (result.deviceIndex == -1) {
               this.residents[result.index].pairsDevice = null;
-              this.$refs.residents[result.index].updatePairsDevice();
-              this.$refs.residents[result.index].clearEvent();
             } else {
               this.residents[result.index].thorDevices.splice(
                 result.deviceIndex,
