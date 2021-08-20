@@ -53,18 +53,21 @@
         {{
           resident.thorDevices.length > 0 ? resident.thorDevices[0].name : "無"
         }}
+        {{ resident.thorDevices.length > 0 && resident.thorDevices[0].battery > 0 ? resident.thorDevices[0].battery + "%" : ""}}
       </div>
       <div v-bind:class="[activeDeviceIndex == 1 ? 'active' : 'inactive']">
         Thor 2:
         {{
           resident.thorDevices.length > 1 ? resident.thorDevices[1].name : "無"
         }}
+        {{ resident.thorDevices.length > 1 && resident.thorDevices[1].battery > 0 ? resident.thorDevices[1].battery + "%" : ""}}
       </div>
       <div
         v-bind:class="[resident.pairsDevice != null && resident.pairsDevice.isConnected ? 'active' : 'inactive']"
       >
         Paris:
         {{ resident.pairsDevice != null ? resident.pairsDevice.name : "無" }}
+        {{ resident.pairsDevice != null && resident.pairsDevice.battery > 0 ? resident.pairsDevice.battery + "%" : ""}}
       </div>
     </div>
     <!-- <div class="icon-people">
@@ -166,7 +169,7 @@
           <svg-icon icon-class="ble_connected" class-name="icon-wrapper" />
         </div> -->
         <div
-          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != None"
+          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != NONE"
         >
           <svg-icon icon-class="thor_connected" class-name="icon-wrapper" />
           <!-- <app-icon name="user" size="l" fill></app-icon> -->
@@ -231,7 +234,9 @@ export default {
       event: this.NONE,
     };
     this.activeDevice.vitalSigns = this.initVitalSigns;
-    this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
+    if (this.resident.pairsDevice) {
+      this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
+    }
     this.resetActiveDevice();
   },
   methods: {
@@ -256,6 +261,7 @@ export default {
     resetActiveDevice() {
       console.log("resetActiveDevice");
       this.activeDeviceIndex = this.NONE;
+      
       for (var i = 0; i < this.resident.thorDevices.length; i++) {
         if (this.resident.thorDevices[i].isConnected) {
           this.activeDevice = this.resident.thorDevices[i];
@@ -270,10 +276,12 @@ export default {
     clearVitalSigns(index) {
       console.log("clearVitalSigns");
       this.resident.thorDevices[index].vitalSigns = this.initVitalSigns;
+      this.resident.thorDevices[index].battery = this.NONE;
     },
     clearSleepEvent() {
       console.log("clearSleepEvent");
       this.resident.pairsDevice.sleepEvent = this.initSleepEvent;
+      this.resident.pairsDevice.battery = this.NONE;
     },
     eventToString(event) {
       switch (event) {

@@ -294,36 +294,33 @@ router.put('/raw/data/record/:id', (req, res, next) => {
         { $push: { rawDataRecords: { day: today } } },
         (err, result) => {
             if (err) {
-                console.log('Resident updateOne err: ' + err);
-                return next(err);
-            } else if (result.n != 0) {
-                console.log("Resident update result: ", result);
-            } else {
-                console.log("Resident update failed: ", result);
-                // return res.status(404).end(); 
+                console.log('Resident update err: ' + err);
+                next(err);
+            } else if (result.ok != 0) {
+                // Insert record object in today record array.
+                Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today },
+                    {
+                        $push: { 'rawDataRecords.$.records': { timestamp: timestamp, rawData: req.body.rawData } }
+                    },
+                    (err, result) => {
+                        if (err) {
+                            console.log('Resident update err: ' + err);
+                            next(err);
+                        } else if (result.n != 0) {
+                            console.log("Resident update result: ", result);
+                            res.status(200).end();
+                        }
+                        else {
+                            console.log("Residen2 update failed: ", result);
+                            res.status(404).end('Resident not found');
+                        }
+                    }
+                );
             }
         }
     );
 
-    // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'rawDataRecords.day': today },
-        {
-            $push: { 'rawDataRecords.$.records': { timestamp: timestamp, rawData: req.body.rawData } }
-        },
-        (err, result) => {
-            if (err) {
-                console.log('Resident update err: ' + err);
-                next(err);
-            } else if (result.n != 0) {
-                console.log("Resident2 update result: ", result);
-                res.status(200).end();
-            }
-            else {
-                console.log("Residen2 update failed: ", result);
-                res.status(404).end('Resident not found');
-            }
-        }
-    );
+    
 });
 
 router.put('/offline/raw/data/record/:id', (req, res, next) => {
@@ -339,7 +336,7 @@ router.put('/offline/raw/data/record/:id', (req, res, next) => {
         { $push: { rawDataRecords: { day: date } } },
         (err, result) => {
             if (err) {
-                console.log('Resident updateOne err: ' + err);
+                console.log('Resident update err: ' + err);
                 next(err);
             } else if (result.ok != 0) {
                 // Insert record object in today record array.
@@ -378,36 +375,33 @@ router.put('/sleep/record/:id', (req, res, next) => {
         { $push: { sleepRecords: { day: today } } },
         (err, result) => {
             if (err) {
-                console.log('Resident updateOne err: ' + err);
-                return next(err);
-            } else if (result.n != 0) {
-                console.log("Resident update result: ", result);
-            } else {
-                console.log("Resident update failed: ", result);
-                // return res.status(404).end(); 
+                console.log('Resident update err: ' + err);
+                next(err);
+            } else if (result.ok != 0) {
+                // Insert record object in today record array.
+                Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today },
+                    {
+                        $push: { 'sleepRecords.$.records': { timestamp: timestamp, event: req.body.event } }
+                    },
+                    (err, result) => {
+                        if (err) {
+                            console.log('Resident update err: ' + err);
+                            next(err);
+                        } else if (result.n != 0) {
+                            console.log("Resident update result: ", result);
+                            res.status(200).end();
+                        }
+                        else {
+                            console.log("Residen update failed: ", result);
+                            res.status(404).end('Resident not found');
+                        }
+                    }
+                );
             }
         }
     );
 
-    // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'sleepRecords.day': today },
-        {
-            $push: { 'sleepRecords.$.records': { timestamp: timestamp, event: req.body.event } }
-        },
-        (err, result) => {
-            if (err) {
-                console.log('Resident update err: ' + err);
-                next(err);
-            } else if (result.n != 0) {
-                console.log("Resident2 update result: ", result);
-                res.status(200).end();
-            }
-            else {
-                console.log("Residen2 update failed: ", result);
-                res.status(404).end('Resident not found');
-            }
-        }
-    );
+    
 });
 
 router.put('/offline/sleep/record/:id', (req, res, next) => {
@@ -780,36 +774,33 @@ router.put('/vital/signs/record/:id', (req, res, next) => {
         { $push: { vitalSignsRecords: { day: today } } },
         (err, result) => {
             if (err) {
-                console.log('Resident updateOne err: ' + err);
+                console.log('Resident update err: ' + err);
                 return next(err);
-            } else if (result.n != 0) {
-                console.log("Resident update result: ", result);
-            } else {
-                console.log("Resident update failed: ", result);
-                // return res.status(404).end(); 
+            } else if (result.ok != 0) {
+                // Insert record object in today record array.
+                Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': today },
+                    {
+                        $push: { 'vitalSignsRecords.$.records': { timestamp: timestamp, vitalSigns: req.body.vitalSigns } }
+                    },
+                    (err, result) => {
+                        if (err) {
+                            console.log('Resident update err: ' + err);
+                            next(err);
+                        } else if (result.n != 0) {
+                            console.log("Resident update result: ", result);
+                            res.status(200).end();
+                        }
+                        else {
+                            console.log("Residen update failed: ", result);
+                            res.status(404).end('Resident not found');
+                        }
+                    }
+                ); 
             }
         }
     );
 
-    // Insert record object in today record array.
-    Resident.updateOne({ _id: req.params.id, 'vitalSignsRecords.day': today },
-        {
-            $push: { 'vitalSignsRecords.$.records': { timestamp: timestamp, vitalSigns: req.body.vitalSigns } }
-        },
-        (err, result) => {
-            if (err) {
-                console.log('Resident update err: ' + err);
-                next(err);
-            } else if (result.n != 0) {
-                console.log("Resident2 update result: ", result);
-                res.status(200).end();
-            }
-            else {
-                console.log("Residen2 update failed: ", result);
-                res.status(404).end('Resident not found');
-            }
-        }
-    );
+    
 });
 
 router.get('/vital/signs/record/:id/:start/:end', async (req, res, next) => {
