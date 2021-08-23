@@ -3,15 +3,19 @@
   <el-card
     id="card"
     v-bind:class="[
-      activeDevice.isConnected || (resident.pairsDevice != null && resident.pairsDevice.isConnected) ? 
-        'device-card' : 'device-card card-disconnect',
+      activeDevice.isConnected ||
+      (resident.pairsDevice != null && resident.pairsDevice.isConnected)
+        ? 'device-card'
+        : 'device-card card-disconnect',
     ]"
     :body-style="{ padding: '0px' }"
   >
     <div
       v-bind:class="[
-        activeDevice.isConnected || (resident.pairsDevice != null && resident.pairsDevice.isConnected) ? 
-          'card-title' : 'card-title title-disconnect',
+        activeDevice.isConnected ||
+        (resident.pairsDevice != null && resident.pairsDevice.isConnected)
+          ? 'card-title'
+          : 'card-title title-disconnect',
       ]"
     >
       <span
@@ -53,21 +57,37 @@
         {{
           resident.thorDevices.length > 0 ? resident.thorDevices[0].name : "無"
         }}
-        {{ resident.thorDevices.length > 0 && resident.thorDevices[0].battery > 0 ? resident.thorDevices[0].battery + "%" : ""}}
+        {{
+          resident.thorDevices.length > 0 && resident.thorDevices[0].battery > 0
+            ? resident.thorDevices[0].battery + "%"
+            : ""
+        }}
       </div>
       <div v-bind:class="[activeDeviceIndex == 1 ? 'active' : 'inactive']">
         Thor 2:
         {{
           resident.thorDevices.length > 1 ? resident.thorDevices[1].name : "無"
         }}
-        {{ resident.thorDevices.length > 1 && resident.thorDevices[1].battery > 0 ? resident.thorDevices[1].battery + "%" : ""}}
+        {{
+          resident.thorDevices.length > 1 && resident.thorDevices[1].battery > 0
+            ? resident.thorDevices[1].battery + "%"
+            : ""
+        }}
       </div>
       <div
-        v-bind:class="[resident.pairsDevice != null && resident.pairsDevice.isConnected ? 'active' : 'inactive']"
+        v-bind:class="[
+          resident.pairsDevice != null && resident.pairsDevice.isConnected
+            ? 'active'
+            : 'inactive',
+        ]"
       >
         Paris:
         {{ resident.pairsDevice != null ? resident.pairsDevice.name : "無" }}
-        {{ resident.pairsDevice != null && resident.pairsDevice.battery > 0 ? resident.pairsDevice.battery + "%" : ""}}
+        {{
+          resident.pairsDevice != null && resident.pairsDevice.battery > 0
+            ? resident.pairsDevice.battery + "%"
+            : ""
+        }}
       </div>
     </div>
     <!-- <div class="icon-people">
@@ -145,11 +165,10 @@
           <span>睡眠事件</span>
           <span style="float: right">
             {{
-              
-              resident.pairsDevice == null || resident.pairsDevice.sleepEvent.event == NONE
+              resident.pairsDevice == null ||
+              resident.pairsDevice.sleepEvent.event == NONE
                 ? "----"
                 : eventToString(resident.pairsDevice.sleepEvent.event)
-                  
             }}
           </span>
         </div>
@@ -169,15 +188,27 @@
           <svg-icon icon-class="ble_connected" class-name="icon-wrapper" />
         </div> -->
         <div
-          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr != NONE"
+          v-if="activeDevice.isConnected && activeDevice.vitalSigns.hr == NONE"
         >
-          <svg-icon icon-class="thor_connected" class-name="icon-wrapper" />
+          <svg-icon icon-class="thor_connected2" class-name="icon-wrapper" />
           <!-- <app-icon name="user" size="l" fill></app-icon> -->
         </div>
-        <div v-else>
-          <svg-icon icon-class="thor_disconnected" class-name="icon-wrapper" />
+        <div
+          v-else-if="
+            activeDevice.isConnected && activeDevice.vitalSigns.hr != NONE
+          "
+        >
+          <svg-icon icon-class="thor_connected" class-name="icon-wrapper" />
         </div>
-        <div v-if="resident.pairsDevice != null && resident.pairsDevice.isConnected">
+        <div v-else>
+          <svg-icon icon-class="thor_unbind" class-name="icon-wrapper" />
+        </div>
+
+        <div
+          v-if="
+            resident.pairsDevice != null && resident.pairsDevice.isConnected
+          "
+        >
           <svg-icon icon-class="sleep" class-name="icon-wrapper" />
         </div>
         <div v-else>
@@ -261,7 +292,7 @@ export default {
     resetActiveDevice() {
       console.log("resetActiveDevice");
       this.activeDeviceIndex = this.NONE;
-      
+
       for (var i = 0; i < this.resident.thorDevices.length; i++) {
         if (this.resident.thorDevices[i].isConnected) {
           this.activeDevice = this.resident.thorDevices[i];
@@ -292,7 +323,6 @@ export default {
         case 2:
           return "翻身";
       }
-
     },
     goToInfoPage() {
       //if (this.device.resident) {
