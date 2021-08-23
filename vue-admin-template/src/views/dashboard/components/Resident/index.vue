@@ -90,9 +90,7 @@
         }}
       </div>
     </div>
-    <!-- <div class="icon-people">
-      <svg-icon icon-class="people"/>
-    </div> -->
+
     <el-row>
       <el-col class="test" :span="18">
         <div class="text">
@@ -414,11 +412,6 @@ export default {
   color: red;
 }
 
-.icon-people {
-  color: #36a3f7;
-  float: right;
-  font-size: 36px;
-}
 .icon-thor:hover {
   color: #36a3f7;
 }
@@ -436,7 +429,7 @@ export default {
 }
 .icon-wrapper {
   color: #36a3f7;
-
+  background-size: "24px 24px";
   height: 5em;
   width: 4em;
   margin-top: 5px;

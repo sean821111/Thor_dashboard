@@ -16,7 +16,7 @@
         <el-input
           v-model="search"
           clearable
-          placeholder="床號或姓名....."
+          placeholder="欲搜尋的床號"
           auto-complete="on"
           size="small"
           @keydown.enter.native="handleSearchResident"
@@ -233,7 +233,9 @@ export default {
                 1
               );
               this.$refs.residents[result.index].resetActiveDevice();
-              this.$refs.residents[result.index].clearVitalSigns(result.deviceIndex);
+              this.$refs.residents[result.index].clearVitalSigns(
+                result.deviceIndex
+              );
             }
           }
         }

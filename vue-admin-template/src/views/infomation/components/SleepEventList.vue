@@ -335,7 +335,8 @@ export default {
         }
         if (
           analysis.getOutOffBedTimestamp != 0 &&
-          analysis.sleepTimestamp != 0
+          analysis.sleepTimestamp != 0 &&
+          analysis.getOutOffBedTimestamp > analysis.sleepTimestamp
         ) {
           var timeOnbed =
             parseInt(analysis.getOutOffBedTimestamp) -

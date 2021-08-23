@@ -4,7 +4,11 @@
 
     <el-row style="margin-bottom: 32px">
       <el-col :xs="18" :sm="15" :lg="10">
-        <div id="heatmap" class="heatmapjs-container"></div>
+        <div id="heatmap" class="heatmapjs-container">
+          <img src="../../../assets/bed.png" />
+        </div>
+
+        <!-- <div id="heatmap" class="heatmapjs-container"></div> -->
       </el-col>
       <!-- <el-col :xs="5" :sm="5" :lg="5">
         <radial-bar
@@ -139,24 +143,24 @@ export default {
     initData() {
       this.heatmapInstance = Heatmap.create({
         container: document.getElementById("heatmap"),
-        radius: 70,
+        radius: 50,
         blur: 0.7,
       });
       var points = [];
-
+      var offset = 160;
       getResidentInfo(this.residentId).then((response) => {
         if (response.data.pairsDevice != null) {
           this.pressureData = response.data.pairsDevice.rawData;
           // Mock data, maximum value is 2.5
           // this.pressureData = [
-          //   1, 2, 1, 1, 2, 0, 5, 1, 1, 1.4, 1.4, 1.4, 2.5, 0, 0.5,
+          // 1, 2, 1, 1, 2, 0, 5, 1, 1, 1.4, 1.4, 1.4, 2.5, 2, 0.5,
           // ];
           for (var i = 2; i > -1; i--) {
             for (var j = 0; j < 5; j++) {
               var index = i * 5 + j;
 
               var point = {
-                x: (j + 1) * 80,
+                x: (j + 1) * 70 + offset,
                 y: (i + 1) * 80,
                 value: this.pressureData[index] * 100,
               };
@@ -177,11 +181,11 @@ export default {
     setHeatmap(data) {
       var points = [];
       var index = 0;
-
+      var offset = 160;
       for (var i = 2; i > -1; i--) {
         for (var j = 0; j < 5; j++) {
           var point = {
-            x: (j + 1) * 80,
+            x: (j + 1) * 70 + offset,
             y: (i + 1) * 80,
             value: data[index] * 100,
           };
@@ -231,14 +235,18 @@ export default {
   border: 1px solid;
   border-color: gray;
 }
-.heatmapjs-container {
+/* .heatmapjs-container {
   width: 520px;
   height: 320px;
   background-color: antiquewhite;
   margin-left: 5%;
   border-left: 40px solid rgb(231, 186, 127);
-  /* border-color: rgba(0, 0, 0, 0.05); */
+  border-color: rgba(0, 0, 0, 0.05);
   box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.5);
+} */
+.heatmapjs-container {
+  height: 300px;
+  width: 620px;
 }
 .radial-bar-wrapper {
   margin-left: 5%;
