@@ -69,6 +69,10 @@ var lineChartData = {
       unit: "BPM",
       color: "#40c9c6",
       areaColor: "#a8f0ef",
+      threshold: 0,
+      gt: 40,
+      lte: 240,
+      ymin: 40,
     },
     val: [],
     timeline: [],
@@ -79,6 +83,10 @@ var lineChartData = {
       unit: "℃",
       color: "#3888fa",
       areaColor: "#f3f8ff",
+      threshold: 37.5,
+      gt: 35,
+      lte: 37.5,
+      ymin: 20,
     },
     val: [],
     timeline: [],
@@ -87,8 +95,14 @@ var lineChartData = {
     chartOption: {
       title: "血氧濃度",
       unit: "%",
-      color: "#f4516c",
-      areaColor: "#f7b5c0",
+      color: "#3888fa",
+      areaColor: "#f3f8ff",
+      // color: "#f4516c",
+      // areaColor: "#f7b5c0",
+      threshold: 92,
+      gt: 92,
+      lte: 100,
+      ymin: 70,
     },
     val: [],
     timeline: [],
@@ -99,6 +113,10 @@ var lineChartData = {
       unit: "%",
       color: "#34bfa3",
       areaColor: "#96f1df",
+      threshold: 0,
+      gt: 0,
+      lte: 5,
+      ymin: 0,
     },
     val: [],
     timeline: [],
@@ -129,6 +147,7 @@ Date.prototype.format = function (fmt) {
       );
   return fmt;
 };
+let sseClient;
 
 export default {
   name: "DashboardChart",
@@ -141,6 +160,7 @@ export default {
   data() {
     return {
       residentName: null,
+      deviceName: null,
       lineChartData: lineChartData.hr,
       vitalSignRecords: null,
       isConnected: null,
@@ -151,6 +171,9 @@ export default {
       isDate: true,
       timeline: [],
     };
+  },
+  sse: {
+    cleanup: true,
   },
   props: {
     residentId: {
@@ -281,6 +304,44 @@ export default {
       }
     },
   },
+
+  mounted() {
+    sseClient = this.$sse.create({
+      url: process.env.VUE_APP_BASE_API + "/device/update",
+      format: "json",
+      polyfill: true,
+      withCredentials: false,
+    });
+
+    // Catch any errors (ie. lost connections, etc.)
+    sseClient.on("error", (e) => {
+      console.error("lost connection or failed to parse!", e);
+
+      // If this error is due to an unexpected disconnection, EventSource will
+      // automatically attempt to reconnect indefinitely. You will _not_ need to
+      // re-add your handlers.
+    });
+
+    // Handle messages without a specific event
+    sseClient.on("message", this.handleMessage);
+
+    sseClient
+      .connect()
+      .then((sse) => {
+        console.log("We're connected!");
+
+        // Unsubscribes from event-less messages after 7 seconds
+        // setTimeout(() => {
+        //   sseClient.off('UPDATE_DEIVCE', this.handleMessage);
+        //   console.log('Stopped listening to event-less messages!');
+        // }, 7000);
+      })
+      .catch((err) => {
+        // When this error is caught, it means the initial connection to the
+        // events server failed.  No automatic attempts to reconnect will be made.
+        console.error("Failed to connect to server", err);
+      });
+  },
   methods: {
     getCurrentRecord() {
       getResidentVitalSignsRecord(
@@ -381,6 +442,18 @@ export default {
       }
       return data;
     },
+  },
+
+  handleMessage(message) {
+    console.warn("Received a message w/o an event!", message);
+    if (message != "initial") {
+      // console.log("Received a json");
+      JSON.parse(JSON.stringify(message));
+      console.log("recevied resident id !!!!!");
+
+      // if (this.residentId === message._id) {
+      // }
+    }
   },
 };
 </script>

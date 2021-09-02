@@ -429,7 +429,6 @@ export default {
 }
 .icon-wrapper {
   color: #36a3f7;
-  background-size: "24px 24px";
   height: 5em;
   width: 4em;
   margin-top: 5px;

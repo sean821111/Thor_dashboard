@@ -1,7 +1,16 @@
 <template>
   <div>
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
-      <el-tab-pane label="個人床位資訊" name="first">
+      <el-tab-pane label="歷史紀錄" name="first">
+        <div>
+          <vital-signs-history
+            v-if="isUpdate1"
+            :residentId="this.resident._id"
+          />
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="個人床位資訊" name="second">
         <div v-if="editInfo">
           <edit-info
             :resident="resident"
@@ -11,18 +20,9 @@
         </div>
         <div v-else>
           <resident-info
-            v-if="isUpdate1"
+            v-if="isUpdate2"
             :resident="resident"
             @edit-mode="changeMode"
-          />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane label="歷史紀錄" name="second">
-        <div>
-          <vital-signs-history
-            v-if="isUpdate2"
-            :residentId="this.resident._id"
           />
         </div>
       </el-tab-pane>
@@ -95,9 +95,10 @@ export default {
   methods: {
     fetchResident() {
       if (this.$route.query.residentId) {
+        this.resident._id = this.$route.query.residentId;
         getResidentInfo(this.$route.query.residentId).then((response) => {
           this.resident = response.data;
-          console.log("resident: " + JSON.stringify(this.resident._id));
+          console.log("resident ID: " + JSON.stringify(this.resident._id));
         });
       }
     },

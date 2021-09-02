@@ -22,6 +22,10 @@ import resize from "./mixins/resize";
 //   }
 // }
 
+// for (var i = 0; i < this.chartData.val.length; i++) {
+//   console.log("test: " + val[i]);
+// }
+
 export default {
   mixins: [resize],
   props: {
@@ -49,7 +53,12 @@ export default {
   data() {
     return {
       chart: null,
+      zoomEnd: null,
+      zoomStart: null,
     };
+  },
+  created() {
+    this.getZoomRange();
   },
   watch: {
     chartData: {
@@ -72,6 +81,17 @@ export default {
     this.chart = null;
   },
   methods: {
+    getZoomRange() {
+      var cumulatedMin = new Date().getHours() * 60 + new Date().getMinutes();
+      var totalMin = 24 * 60;
+      var watchingPeriod = 2 * 60; // watching last 2 hours data
+      this.zoomEnd = (cumulatedMin / totalMin) * 100;
+      if (cumulatedMin > watchingPeriod) {
+        this.zoomStart = ((cumulatedMin - watchingPeriod) / totalMin) * 100;
+      } else {
+        this.zoomStart = 0;
+      }
+    },
     initChart() {
       this.chart = echarts.init(this.$el, "macarons");
     },
@@ -81,7 +101,7 @@ export default {
           data: timeline,
           boundaryGap: false,
           axisTick: {
-            show: false,
+            show: true,
           },
         },
         grid: {
@@ -99,13 +119,21 @@ export default {
           padding: [5, 10],
         },
         yAxis: {
+          type: "value",
+          min: chartOption.ymin,
+
           axisTick: {
             show: false,
+          },
+          axisLabel: {
+            formatter: "{value} " + chartOption.unit,
           },
           name: chartOption.unit,
         },
         title: {
           left: "center",
+          align: "right",
+          padding: [0, 0, 30, 0],
           text: chartOption.title,
           textStyle: {
             fontSize: 24,
@@ -113,34 +141,42 @@ export default {
         },
         dataZoom: [
           {
-            show: true,
-            height: 30,
-            xAxisIndex: [0],
-            bottom: 5,
-            start: 10,
-            end: 90,
-            handleIcon:
-              "path://M306.1,413c0,2.2-1.8,4-4,4h-59.8c-2.2,0-4-1.8-4-4V200.8c0-2.2,1.8-4,4-4h59.8c2.2,0,4,1.8,4,4V413z",
-            handleSize: "110%",
-            handleStyle: {
-              color: "#d3dee5",
-            },
-            textStyle: {
-              color: "#fff",
-            },
-            borderColor: "#90979c",
-          },
-          {
             type: "inside",
-            show: true,
-            height: 15,
-            start: 1,
-            end: 35,
+
+            start: this.zoomStart,
+            end: this.zoomEnd,
           },
+          // {
+          //   type: "slider",
+          //   show: false,
+
+          //   realtime: true,
+          //   start: this.zoomStart,
+          //   end: this.zoomEnd,
+          // },
         ],
         // legend: {
         //   data: ['this week']
         // },
+        visualMap: {
+          // type:'piecewise',
+          top: 0,
+          right: 10,
+          show: false,
+          pieces: [
+            {
+              gt: chartOption.gt,
+              lte: chartOption.lte,
+              color: chartOption.color,
+            },
+          ],
+          outOfRange: {
+            symbol: "diamond",
+            symbolSize: [10, 10],
+
+            color: "#FD0100",
+          },
+        },
         series: [
           {
             name: chartOption.title,
@@ -149,10 +185,10 @@ export default {
             itemStyle: {
               normal: {
                 color: "#3888fa",
-                lineStyle: {
-                  color: chartOption.color,
-                  width: 2,
-                },
+                // lineStyle: {
+                //   color: chartOption.color,
+                //   width: 2,
+                // },
                 areaStyle: {
                   color: chartOption.areaColor,
                 },
@@ -161,6 +197,48 @@ export default {
             data: val,
             animationDuration: 2800,
             animationEasing: "quadraticOut",
+            markLine: {
+              data: [
+                {
+                  name: "threshold",
+                  yAxis: chartOption.threshold,
+                },
+              ],
+              lineStyle: {
+                color: "red",
+                width: 1,
+              },
+              label: {
+                position: "middle",
+                fontSize: 20,
+                formatter: chartOption.threshold + chartOption.unit,
+              },
+            },
+            // markArea: {
+            //   itemStyle: {
+            //     color: "rgba(255, 173, 177, 0.4)",
+            //   },
+            //   data: [
+            //     [
+            //       {
+            //         name: "早高峰",
+            //         xAxis: "07:30",
+            //       },
+            //       {
+            //         xAxis: "10:00",
+            //       },
+            //     ],
+            //     [
+            //       {
+            //         name: "晚高峰",
+            //         xAxis: "17:30",
+            //       },
+            //       {
+            //         xAxis: "21:15",
+            //       },
+            //     ],
+            //   ],
+            // },
           },
         ],
       });
