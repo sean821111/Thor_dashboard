@@ -7,7 +7,7 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var cors = require('cors');
 var db = require('./database/db');
-var mqtt = require('./mqtt/mqtt');
+// var mqtt = require('./mqtt/mqtt');
 var compression = require('compression');
 const createError = require("http-errors");
 

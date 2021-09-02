@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const PairsDevice = require('../database/models/pairs_device');
 const ThorDevice = require('../database/models/thor_device');
 const Resident = require('../database/models/resident');
+const TurnOverRecord = require('../database/models/turn_over_record');
 var authenticated = require('./authenticated');
 var deviceUpdate = require('./device_update');
 var router = express.Router();
@@ -960,6 +961,72 @@ router.get('/vital/signs/record/:id', async (req, res, next) => {
     }
 });
 
+router.post('/turn/over/record/:timestamp', async (req, res, next) => {
+    let timestamp = new Date(parseInt(req.params.timestamp) * 1000);
+    let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
+    // Create today record array if not exist.
+    TurnOverRecord.updateOne({ 'day': today }, 
+        {
+            $push: { records: { timestamp: timestamp, rawDataRecords: req.body } }
+        },
+        { upsert: true },
+        (err, result) => {
+            if (err) {
+                console.log('TurnOverRecord update err: ' + err);
+                next(err);
+            } else if (result.n != 0) {
+                console.log("TurnOverRecord update result2: ", result);
+                res.status(200).end();
+            }
+            else {
+                console.log("TurnOverRecord update failed: ", result);
+                res.status(404).end('TurnOverRecord not found');
+            }
+        }
+    );
+});
+
+router.get('/turn/over/record/:timestamp', async (req, res, next) => {
+    let timestamp = new Date(parseInt(req.params.timestamp));
+    let today = new Date(Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), timestamp.getUTCDate()));
+
+    let filtered = await TurnOverRecord.aggregate([
+        { $match: { 'day': today } },
+        {
+            $project: {
+                "records": {
+                    "$filter": {
+                        "input": "$records",
+                        "as": "records",
+                        "cond": {
+                            "$eq": ["$$records.timestamp", timestamp]
+                        }
+                    }
+
+                }
+            }
+        },
+        {
+            $unwind: { "path":"$records", "preserveNullAndEmptyArrays": true }
+        },
+        {
+            $unwind: { "path":"$records.rawDataRecords", "preserveNullAndEmptyArrays": true }
+        },
+        {
+            $group: {
+                "_id": null,
+                "output": { "$push": "$records.rawDataRecords" }
+            }
+        }
+    ]);
+
+    if (filtered.length > 0) {
+        res.status(200).json(filtered[0].output);
+    } else {
+        res.status(200).end([]);
+    }
+});
+
 var schedule = require('node-schedule');
 
 function scheduleCronstyle() {
@@ -987,6 +1054,16 @@ function scheduleCronstyle() {
         Resident.updateMany({ 'sleepRecords.0': { $exists: true } },
             {
                 $pull: { sleepRecords: { day: { $lt: expireTime } } }
+            }, (err, result) => {
+                if (err)
+                    console.log(err);
+                else
+                    console.log("Delete expired record result: ", result);
+            });
+
+        TurnOverRecord.updateMany({ 'turnOverRecords.0': { $exists: true } },
+            {
+                $pull: { turnOverRecords: { day: { $lt: expireTime } } }
             }, (err, result) => {
                 if (err)
                     console.log(err);

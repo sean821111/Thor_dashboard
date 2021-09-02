@@ -51,6 +51,12 @@ export function getResidentVitalSignsRecord(residentId, start, end) {
   })
 }
 
+export function getResidentTurnOverRecord(timestamp) {
+  return request({
+    url: 'residents/turn/over/record/' + timestamp,
+    method: 'get',
+  })
+}
 
 
   // export function getResidentVitalSignsRecord(residentId, dateRange) {

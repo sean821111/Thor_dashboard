@@ -1,62 +1,61 @@
 <template>
   <div margin-width="25%" class="dashboard-editor-container">
-    <h1>{{ this.bedNum }}床壓力分佈圖</h1>
+    <el-row>
+      <el-col :span="12">
+        <el-row>
+          <div class="block_container">
+            <h1>{{ this.bedNum }}床壓力分佈圖</h1>
 
-    <el-row style="margin-bottom: 32px">
-      <el-col :xs="18" :sm="15" :lg="10">
-        <div id="heatmap" class="heatmapjs-container">
-          <img src="../../../assets/bed.png" />
-        </div>
-
-        <!-- <div id="heatmap" class="heatmapjs-container"></div> -->
+            <el-radio-group class="mode_container" v-model="mode" @change="clearHeatmap">
+              <el-radio-button label="real_time">即時</el-radio-button>
+              <el-radio-button label="history">歷史</el-radio-button>
+            </el-radio-group>
+          </div>
+        </el-row>
+        <el-row>
+          <div id="heatmap" class="heatmapjs-container">
+            <img src="../../../assets/bed.png" />
+          </div>
+          <el-row v-if="selectedRecordTimestamp != 0" style="margin-top: 20px" gutter="20">
+            <el-col :span="2">
+              <el-button v-if="playing" icon="el-icon-video-pause" circle @click="pauseHeatmapRecord"></el-button>
+              <el-button v-else icon="el-icon-video-play" circle @click="playHeatmapRecord"></el-button>
+            </el-col>
+            <el-col :span="18">
+              <el-slider
+                
+                v-model="sliderValue"
+                :step="1"
+                :min="0"
+                :max="21"
+                :format-tooltip="formatTooltip"
+                @input="changeHeatmap"
+                >
+              </el-slider>
+            </el-col>
+          </el-row>
+        </el-row>
+        <el-row>
+        </el-row>
       </el-col>
-      <!-- <el-col :xs="5" :sm="5" :lg="5">
-        <radial-bar
-          :chart-title="radialChartTitle"
-          :chart-value="sleepQuality"
-        />
-      </el-col> -->
+      <el-col :span="12">
+        <turn-over-record v-if="mode == 'history'" :residentId="residentId" @selected-record="handleSelectedRecord"/>
+      </el-col>
     </el-row>
-    <!-- <el-row :gutter="24">
-      <el-col :xs="4" :sm="4" :lg="4">
-        <div class="card-panel">
-          <div class="card-panel-icon-wrapper">
-            <svg-icon icon-class="sleep" class-name="card-panel-icon" />
-          </div>
-          <div class="card-panel-description">
-            <div class="card-panel-text">進床</div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :xs="4" :sm="4" :lg="4">
-        <div class="card-panel">
-          <div class="card-panel-icon-wrapper">
-            <svg-icon icon-class="offbed" class-name="card-panel-icon" />
-          </div>
-          <div class="card-panel-description">
-            <div class="card-panel-text">離床</div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :xs="4" :sm="4" :lg="4">
-        <div class="card-panel">
-          <div class="card-panel-icon-wrapper">
-            <svg-icon icon-class="user" class-name="card-panel-icon" />
-          </div>
-          <div class="card-panel-description">
-            <div class="card-panel-text">翻身</div>
-          </div>
-        </div>
-      </el-col>
-    </el-row> -->
+    
+    <el-row style="margin-bottom: 32px">
+      <!-- <el-col :span="10" :xs="18" :sm="15" :lg="10"> -->
+    </el-row>
   </div>
 </template>
 
 
 <script>
 import Heatmap from "heatmap.js";
-import { getResidentInfo, getResidentSleepRecord } from "@/api/resident";
+import { getResidentInfo, getResidentSleepRecord, getResidentTurnOverRecord } from "@/api/resident";
 import RadialBar from "./RadialBar";
+import TurnOverRecord from "./TurnOverRecord";
+import { parseTime } from "@/utils";
 // We store the reference to the SSE client out here
 // so we can access it from other methods
 let sseClient;
@@ -65,6 +64,7 @@ export default {
   name: "Heatmap",
   components: {
     RadialBar,
+    TurnOverRecord
   },
   data() {
     return {
@@ -77,6 +77,11 @@ export default {
       cavWidth: null, //获取宽度
       cavHeight: null, //获取高度
       heatmapInstance: null,
+      sliderValue: 0,
+      selectedRecordTimestamp: 0,
+      selectedRawDataRecords: [],
+      mode: "real_time",
+      playing: false,
     };
   },
   sse: {
@@ -203,6 +208,80 @@ export default {
       // this.heatmapInstance.repaint();
       this.heatmapInstance.setData(heatmapData);
     },
+    getList() {
+      this.listLoading = true;
+      this.listData = [];
+      console.log(
+        "start~end:" +
+          this.residentId +
+          ":" +
+          this.recordStart +
+          "~" +
+          this.recordEnd
+      );
+      //simulate with fake data
+      // this.listData = listData;
+      getResidentSleepRecord(
+        this.residentId,
+        this.recordStart,
+        this.recordEnd
+      ).then((response) => {
+        this.list = response.data;
+        this.total += 1;
+        // this.total = response.data.total;
+
+        // Just to simulate the time of the request
+        // setTimeout(() => {
+        //   this.listLoading = false;
+        // }, 1.5 * 1000);
+      });
+    },
+    formatTooltip(val) {
+      let halfLength = this.selectedRawDataRecords.length / 2;
+      let timestamp = this.selectedRecordTimestamp + ((val - halfLength) * 1000);
+      console.log("timestamp " + timestamp);
+      let time = parseTime(timestamp);
+      console.log("time " + time);
+      return time;
+    },
+    handleSelectedRecord(timestamp) {
+      this.clearHeatmap();
+      this.selectedRecordTimestamp = timestamp;
+      getResidentTurnOverRecord(timestamp).then((response) => {
+        this.selectedRawDataRecords = response.data;
+        this.setHeatmap(this.selectedRawDataRecords[0]);
+      });
+    },
+    changeHeatmap(val) {
+      this.setHeatmap(this.selectedRawDataRecords[val]);
+    },
+    timer() {
+      this.time = setInterval(() => {
+        if (this.sliderValue == this.selectedRawDataRecords.length) {
+          this.playing = false;
+          this.sliderValue = 0;
+          this.stopTimer();
+        } else {
+          this.sliderValue += 1;
+        }
+      }, 1000)
+    },
+    startTimer() {
+      this.timer()
+    },
+    stopTimer() {
+      if (this.time) {
+        clearInterval(this.time)
+      }
+    },
+    playHeatmapRecord() {
+      this.playing = true;
+      this.startTimer();
+    },
+    pauseHeatmapRecord() {
+      this.playing = false;
+      this.stopTimer();
+    },
     handleMessage(message) {
       console.warn("Received a message w/o an event!", message);
       if (message != "initial") {
@@ -212,21 +291,40 @@ export default {
         if (this.deviceName === message.name) {
           if ("rawData" in message) {
             // console.log("rawData");
-            this.setHeatmap(message.rawData);
+            if (this.mode == 'real_time') {
+              this.setHeatmap(message.rawData);
+            }
             // result.device.rawData = message.rawData;
           }
         }
       }
     },
+    clearHeatmap() {
+      this.selectedRecordTimestamp = 0;
+      this.selectedRawDataRecords = [];
+      this.setHeatmap(Array(15).fill(0));
+      this.playing = false;
+      this.sliderValue = 0;
+      this.stopTimer();
+    }
   },
 };
 </script>
 
- <style scoped>
+<style scoped>
 .dashboard-editor-container {
   padding: 32px;
   background-color: rgb(240, 242, 245);
   position: relative;
+}
+
+.block_container {
+  display: flex;
+}
+
+.mode_container {
+  margin-top: 20px;
+  margin-left: 20px;
 }
 
 .div {

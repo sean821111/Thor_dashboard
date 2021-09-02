@@ -60,6 +60,7 @@
         >確認</el-button
       >
       <el-button
+        v-show="exportButton"
         type="primary"
         icon="el-icon-download"
         style="font-size: 16px"
@@ -100,6 +101,12 @@ export default {
       isWeek: false,
       dateSelect: new Date(),
     };
+  },
+  props: {
+    exportButton: {
+      type: Boolean,
+      default: true,
+    },
   },
   methods: {
     dateSubmit() {
