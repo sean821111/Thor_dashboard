@@ -58,6 +58,14 @@ export function getResidentTurnOverRecord(timestamp) {
   })
 }
 
+export function updateResidentVitalSignsThresh(residentId, thresh) {
+  return request({
+    url: 'residents/update/vital/signs/thresh/' + residentId,
+    method: 'put',
+    data: thresh
+  })
+}
+
 
   // export function getResidentVitalSignsRecord(residentId, dateRange) {
   //   console.log("-----------api call:" + JSON.stringify(dateRange));

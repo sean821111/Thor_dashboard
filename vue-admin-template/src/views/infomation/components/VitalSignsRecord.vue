@@ -1,20 +1,41 @@
 <template>
   <div class="dashboard-editor-container">
     <el-row style="padding: 6px 6px 0; margin-bottom: 6px; font-size: 20px">
-      <el-col :xs="10" :sm="10" :lg="4">
-        <svg-icon icon-class="user" style="color: #36a3f7" />
-        <span
-          style="color: rgba(0, 0, 0, 0.45); font-size: 16; font-weight: bold"
-        >
-          {{ this.residentName }}
-        </span>
-      </el-col>
+      <svg-icon icon-class="user" style="color: #36a3f7" />
+      <span
+        style="color: rgba(0, 0, 0, 0.45); font-size: 16; font-weight: bold"
+      >
+        {{ this.residentName }}
+      </span>
+      <el-radio-group class="mode_container" v-model="mode" @change="resetLineChart" style="margin-left: 20px;">
+        <el-radio-button label="real_time">即時</el-radio-button>
+        <el-radio-button label="history">歷史</el-radio-button>
+      </el-radio-group>
+      <span
+        style="color: rgba(0, 0, 0, 0.45); font-size: 16; font-weight: bold; margin-left: 20px;"
+      >顯示範圍:
+        <el-select v-model="watchingPeriod" placeholder="請選擇顯示範圍" style="width:10%; margin-left: 5px;">
+          <el-option
+            v-for="item in periodOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+        <el-switch
+          class="switchStyle"
+          v-model="enableWarning"
+          active-text="開啟警告"
+          style="margin-left: 20px;"
+        />
+      </span>
     </el-row>
 
-    <panel-group @handleSetLineChartData="handleSetLineChartData" />
+    <panel-group @handleSetLineChartData="handleSetLineChartData" @updateThresh="updateThresh" :vitalSignsThresh="vitalSignsThresh"/>
     <el-row>
       <el-col>
         <date-select
+          v-if="mode == 'history'"
           @dateSubmit="dateSubmit"
           @handleDownload="handleDownload"
         />
@@ -24,7 +45,7 @@
       v-if="this.isDate"
       style="background: #fff; padding: 16px 16px 0; margin-bottom: 32px"
     >
-      <line-chart :chart-data="lineChartData" />
+      <line-chart ref="lineChart" :chart-data="lineChartData" :watchingPeriod="watchingPeriod" :isRealTime="mode=='real_time'" />
     </el-row>
     <el-row
       v-else
@@ -59,7 +80,7 @@ import LineChart from "./LineChart";
 import BarChart from "./BarChart";
 import DateSelect from "./DateSelect";
 // import BarChart from './components/BarChart'
-import { getResidentVitalSignsRecord, getResidentInfo } from "@/api/resident";
+import { getResidentVitalSignsRecord, getResidentInfo, updateResidentVitalSignsThresh } from "@/api/resident";
 import { dataTool } from "echarts/lib/echarts";
 
 var lineChartData = {
@@ -69,7 +90,7 @@ var lineChartData = {
       unit: "BPM",
       color: "#40c9c6",
       areaColor: "#a8f0ef",
-      threshold: 0,
+      threshold: -1,
       gt: 40,
       lte: 240,
       ymin: 40,
@@ -84,7 +105,7 @@ var lineChartData = {
       color: "#3888fa",
       areaColor: "#f3f8ff",
       threshold: 37.5,
-      gt: 35,
+      gt: 20,
       lte: 37.5,
       ymin: 20,
     },
@@ -113,7 +134,7 @@ var lineChartData = {
       unit: "%",
       color: "#34bfa3",
       areaColor: "#96f1df",
-      threshold: 0,
+      threshold: -1,
       gt: 0,
       lte: 5,
       ymin: 0,
@@ -170,6 +191,25 @@ export default {
         new Date(new Date().toLocaleDateString()).getTime() + 24 * 3600 * 1000,
       isDate: true,
       timeline: [],
+      mode: 'real_time',
+      vitalSignsThresh: {
+        temp: 37.5,
+        hr: 0,
+        spo2: 90,
+        pi: 0
+      },
+      watchingPeriod: 120,
+      periodOptions: [{
+          value: 60,
+          label: '1小時'
+        }, {
+          value: 120,
+          label: '2小時'
+        }
+      ],
+      isTempWarning: false,
+      isSpO2Warning: false,
+      enableWarning: true,
     };
   },
   sse: {
@@ -186,6 +226,8 @@ export default {
     // this.testDate();
     this.getResidentName();
     this.setTimeline();
+
+    this.timeIndex = new Date().getHours() * 60 + new Date().getMinutes();;
   },
   watch: {
     vitalSignRecords: function (records) {
@@ -349,12 +391,14 @@ export default {
         this.initDateStart,
         this.initDateEnd
       ).then((response) => {
+        console.log('getResidentVitalSignsRecord')
         this.vitalSignRecords = response.data;
       });
     },
     handleSetLineChartData(type) {
+      console.log('handleSetLineChartData')
       this.lineChartData = lineChartData[type];
-      this.selectType = type;
+      this.selectType = type;                                                                                        
     },
     dateSubmit(isDate, dateSelect) {
       this.isDate = isDate;
@@ -378,6 +422,11 @@ export default {
     getResidentName() {
       getResidentInfo(this.residentId).then((response) => {
         this.residentName = response.data.info.name;
+        this.vitalSignsThresh = response.data.vitalSignsThresh;
+        lineChartData.temp.chartOption.threshold = this.vitalSignsThresh.temp; 
+        lineChartData.temp.chartOption.lte = this.vitalSignsThresh.temp; 
+        lineChartData.spo2.chartOption.threshold = this.vitalSignsThresh.spo2; 
+        lineChartData.spo2.chartOption.gt = this.vitalSignsThresh.spo2; 
       });
     },
     setTimeline() {
@@ -442,18 +491,82 @@ export default {
       }
       return data;
     },
-  },
+    resetLineChart() {
+      this.dateSubmit(true, new Date().toString());
+    },
+    updateThresh(thresh) {
+      this.vitalSignsThresh = thresh;    
+      lineChartData.temp.chartOption.threshold = this.vitalSignsThresh.temp; 
+      lineChartData.temp.chartOption.lte = this.vitalSignsThresh.temp; 
+      lineChartData.spo2.chartOption.threshold = this.vitalSignsThresh.spo2; 
+      lineChartData.spo2.chartOption.gt = this.vitalSignsThresh.spo2; 
+      updateResidentVitalSignsThresh(this.residentId, { vitalSignsThresh: thresh })
+        .then(response => console.log(response));                                                                   
+    },
+    handleMessage(message) {
+      console.warn("Received a message w/o an event!", message);
+      if (message != "initial") {
+        // console.log("Received a json");
+        JSON.parse(JSON.stringify(message));
+        console.log("recevied resident id !!!!!");
 
-  handleMessage(message) {
-    console.warn("Received a message w/o an event!", message);
-    if (message != "initial") {
-      // console.log("Received a json");
-      JSON.parse(JSON.stringify(message));
-      console.log("recevied resident id !!!!!");
+        if ("residentId" in message && this.mode == 'real_time') {
+          let time = new Date(message.timestamp);
+          const hour = time.getHours();
+          const min = time.getMinutes();
+          let timeIndex = hour * 60 + min;
 
-      // if (this.residentId === message._id) {
-      // }
-    }
+          var hr = message.vitalSigns.hr;
+          var temp = Math.round(message.vitalSigns.temp * 10) / 10;
+          var spo2 = message.vitalSigns.spo2;
+
+          var pi = Math.round(message.vitalSigns.pi * 100) / 100;
+          if (hr <= 0) {
+            hr = "";
+          }
+          if (spo2 < 0) {
+            spo2 = "";
+            pi = "";
+          }
+          this.$refs.lineChart.setZoomRange(timeIndex);
+          if (timeIndex == 0) {
+            lineChartData.hr.val = [];
+            lineChartData.temp.val = [];
+            lineChartData.spo2.val = [];
+            lineChartData.pi.val = [];
+          } 
+          this.$set(lineChartData.hr.val, timeIndex, hr);
+          this.$set(lineChartData.temp.val, timeIndex, temp);
+          this.$set(lineChartData.spo2.val, timeIndex, spo2);
+          this.$set(lineChartData.pi.val, timeIndex, pi);
+
+          if (this.enableWarning) {
+            if (temp > this.vitalSignsThresh.temp && !this.isTempWarning) {
+              this.isTempWarning = true;
+              this.$notify.error({
+                title: '警告',
+                message: '體溫過高',
+                duration: 0,
+                onClose: () => {
+                  this.isTempWarning = false;
+                }
+              });
+            }
+            if (spo2 <= this.vitalSignsThresh.spo2 && !this.isSpO2Warning) {
+              this.isSpO2Warning = true;
+              this.$notify.error({
+                title: '警告',
+                message: '血氧過低',
+                duration: 0,
+                onClose: () => {
+                  this.isSpO2Warning = false;
+                }
+              });
+            }
+          }
+        }
+      }
+    },
   },
 };
 </script>
@@ -504,4 +617,5 @@ export default {
 .icon-pi {
   color: #96f1df;
 }
+
 </style>

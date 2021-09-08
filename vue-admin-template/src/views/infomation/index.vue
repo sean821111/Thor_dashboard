@@ -1,9 +1,9 @@
 <template>
   <div>
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
-      <el-tab-pane label="歷史紀錄" name="first">
+      <el-tab-pane label="生理量測紀錄" name="first">
         <div>
-          <vital-signs-history
+          <vital-signs-record
             v-if="isUpdate1"
             :residentId="this.resident._id"
           />
@@ -40,7 +40,7 @@
 
 <script>
 import { getResidentInfo } from "@/api/resident";
-import VitalSignsHistory from "./components/VitalSignsHistory";
+import VitalSignsRecord from "./components/VitalSignsRecord";
 import ResidentInfo from "./components/ResidentInfo";
 import EditInfo from "./components/EditInfo";
 import SleepEventList from "./components/SleepEventList";
@@ -59,7 +59,7 @@ export default {
   components: {
     ResidentInfo,
     EditInfo,
-    VitalSignsHistory,
+    VitalSignsRecord,
     SleepEventList,
     Heatmap,
   },

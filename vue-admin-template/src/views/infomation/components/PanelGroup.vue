@@ -1,40 +1,42 @@
 <template>
   <el-row :gutter="30" class="panel-group">
     <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
-      <div class="card-panel" @click="handleSetLineChartData('hr')">
-        <div class="card-panel-icon-wrapper icon-hr">
+      <div class="card-panel" >
+        <div class="card-panel-icon-wrapper icon-hr" @click="handleSetLineChartData('hr')">
           <svg-icon icon-class="cardiogram" class-name="card-panel-icon" />
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">心率</div>
           <div class="card-panel-text">(BPM)</div>
+          <!-- <el-input-number v-model="vitalSignsThresh.hr" @change="updateThresh" controls-position="right" size="small" /> -->
+        
           <!-- <span class="card-panel-num">{{vitalSigns.hr}}</span> -->
           <!-- <count-to :start-val="0" :end-val="80" :duration="3200" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
-      <div class="card-panel" @click="handleSetLineChartData('temp')">
+    <el-col :xs="10" :sm="10" :lg="5" class="card-panel-col">
+      <div class="card-panel" >
         <div class="card-panel-icon-wrapper icon-temp">
-          <svg-icon icon-class="celsius" class-name="card-panel-icon" />
+          <svg-icon icon-class="celsius" class-name="card-panel-icon" @click="handleSetLineChartData('temp')"/>
         </div>
         <div class="card-panel-description">
-          <div class="card-panel-text">體溫</div>
-          <div class="card-panel-text">(℃)</div>
+          <div class="card-panel-text">體溫 (℃)</div>
+          <el-input-number v-model="vitalSignsThresh.temp" @change="updateThresh" controls-position="right" size="small" :precision="1" :step="0.1" />
 
           <!-- <span class="card-panel-num">{{Math.round(vitalSigns.temp*10)/10}}</span> -->
           <!-- <count-to :start-val="0" :end-val="37" :duration="3000" class="card-panel-num" /> -->
         </div>
       </div>
     </el-col>
-    <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
-      <div class="card-panel" @click="handleSetLineChartData('spo2')">
+    <el-col :xs="10" :sm="10" :lg="5" class="card-panel-col">
+      <div class="card-panel">
         <div class="card-panel-icon-wrapper icon-spo2">
-          <svg-icon icon-class="oxygen" class-name="card-panel-icon" />
+          <svg-icon icon-class="oxygen" class-name="card-panel-icon" @click="handleSetLineChartData('spo2')" />
         </div>
         <div class="card-panel-description">
-          <div class="card-panel-text">血氧濃度</div>
-          <div class="card-panel-text">(%)</div>
+          <div class="card-panel-text">血氧濃度 (%)</div>
+          <el-input-number v-model="vitalSignsThresh.spo2" @change="updateThresh" controls-position="right" size="small" />
 
           <!-- <span class="card-panel-num">{{vitalSigns.spo2}}</span> -->
           <!-- <count-to :start-val="0" :end-val="99" :duration="3000" class="card-panel-num" /> -->
@@ -43,13 +45,14 @@
     </el-col>
 
     <el-col :xs="10" :sm="10" :lg="4" class="card-panel-col">
-      <div class="card-panel" @click="handleSetLineChartData('pi')">
+      <div class="card-panel">
         <div class="card-panel-icon-wrapper icon-pi">
-          <svg-icon icon-class="perfusion" class-name="card-panel-icon" />
+          <svg-icon icon-class="perfusion" class-name="card-panel-icon" @click="handleSetLineChartData('pi')" />
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">灌注指標</div>
           <div class="card-panel-text">(%)</div>
+          <!-- <el-input-number v-model="vitalSignsThresh.pi" @change="updateThresh" controls-position="right" size="small" :precision="2" :step="0.01"/> -->
 
           <!-- <span class="card-panel-num">{{Math.round(vitalSigns.pi*100)/100}}</span> -->
           <!-- <count-to :start-val="0" :end-val="10" :duration="3000" class="card-panel-num" /> -->
@@ -83,16 +86,20 @@ export default {
     CountTo,
   },
   props: {
-    // vitalSigns: {
-    //   type: Object,
-    //   default: null,
-    //   required: true,
-    // },
+    vitalSignsThresh: {
+      type: Object,
+      default: null,
+      required: true,
+    },
   },
   methods: {
     handleSetLineChartData(type) {
       this.$emit("handleSetLineChartData", type);
     },
+    updateThresh() {
+      console.log("this.vitalSignsThresh.hr", this.vitalSignsThresh.hr);
+      this.$emit("updateThresh", this.vitalSignsThresh);
+    }
   },
 };
 </script>
@@ -187,6 +194,7 @@ export default {
         color: rgba(0, 0, 0, 0.45);
         font-size: 16px;
         margin-bottom: 12px;
+        text-align: center;
       }
 
       .card-panel-num {

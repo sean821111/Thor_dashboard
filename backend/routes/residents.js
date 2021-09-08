@@ -125,6 +125,21 @@ router.delete('/:id', authenticated, (req, res, next) => {
     });
 });
 
+router.put('/update/vital/signs/thresh/:id', authenticated, async (req, res, next) => {
+    Resident.updateOne({ _id: req.params.id }, 
+        { $set: req.body },
+        (err, result) => {
+            if (err) {
+                next(err);
+            } else if (result.n != 0) {
+                res.status(200).end();
+            } else {
+                res.status(404).end('Resident not found');
+            }
+        }
+    );
+});
+
 router.put('/update/:id', authenticated, async (req, res, next) => {
     let data = req.body;
     let resident = null;
@@ -789,6 +804,12 @@ router.put('/vital/signs/record/:id', (req, res, next) => {
                             next(err);
                         } else if (result.n != 0) {
                             console.log("Resident update result: ", result);
+                            var message = {
+                                residentId: req.params.id,
+                                timestamp: timestamp, 
+                                vitalSigns: req.body.vitalSigns
+                            }
+                            deviceUpdate.sse.send(message);
                             res.status(200).end();
                         }
                         else {

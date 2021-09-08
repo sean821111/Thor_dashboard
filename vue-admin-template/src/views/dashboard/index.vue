@@ -61,6 +61,7 @@ export default {
     return {
       devices: null,
       residents: null,
+      searchResidents: null,
       isSearching: false,
       search: null,
       vitalSign: null,
@@ -121,6 +122,7 @@ export default {
       console.log("fetchResidentList");
       getResidentList().then((response) => {
         this.residents = response.data;
+        this.searchResidents = Array.from(this.residents);
         // console.log("get device: "+JSON.stringify(this.devices));
       });
     },
@@ -131,21 +133,20 @@ export default {
         this.residents = this.residents.filter(
           (resident) => resident._id !== id
         );
+        this.searchResidents = Array.from(this.residents);
       });
     },
     handleSearchResident() {
       console.log("handleSearchResident");
       console.log(this.search);
 
-      var result = this.residents.filter(
+      var result = this.searchResidents.filter(
         (resident) =>
-          resident.info.name === this.search ||
-          resident.bedNumber === this.search
+          resident.info.name.includes(this.search) ||
+          resident.bedNumber.includes(this.search)
       );
-      if (result.length != this.residents.length) {
-        this.residents = result;
-        this.isSearching = true;
-      }
+      this.residents = result;
+      this.isSearching = true;
     },
     handleRecoverResident() {
       if (!this.search && this.isSearching) {

@@ -49,16 +49,26 @@ export default {
       type: Object,
       required: true,
     },
+    isRealTime: {
+      type: Boolean,
+      required: true,
+    },
+    watchingPeriod: {
+      type: Number,
+      required: true,
+    }
   },
   data() {
     return {
       chart: null,
-      zoomEnd: null,
-      zoomStart: null,
+      zoomEnd: this.watchingPeriod,
+      zoomStart: 0,
     };
   },
   created() {
-    this.getZoomRange();
+    let cumulatedMin = new Date().getHours() * 60 + new Date().getMinutes();
+    this.setZoomRange(cumulatedMin);
+     
   },
   watch: {
     chartData: {
@@ -67,6 +77,13 @@ export default {
         this.setOptions(val, timeline, chartOption);
       },
     },
+    watchingPeriod: {
+      handler() {
+        let cumulatedMin = new Date().getHours() * 60 + new Date().getMinutes();
+        this.setZoomRange(cumulatedMin);
+        this.setOptions(this.chartData);
+      }
+    }
   },
   mounted() {
     this.$nextTick(() => {
@@ -81,21 +98,17 @@ export default {
     this.chart = null;
   },
   methods: {
-    getZoomRange() {
-      var cumulatedMin = new Date().getHours() * 60 + new Date().getMinutes();
-      var totalMin = 24 * 60;
-      var watchingPeriod = 2 * 60; // watching last 2 hours data
-      this.zoomEnd = (cumulatedMin / totalMin) * 100;
-      if (cumulatedMin > watchingPeriod) {
-        this.zoomStart = ((cumulatedMin - watchingPeriod) / totalMin) * 100;
-      } else {
-        this.zoomStart = 0;
+    setZoomRange(cumulatedMin) {
+      if (cumulatedMin > this.watchingPeriod) {
+        this.zoomStart = cumulatedMin - this.watchingPeriod;
+        this.zoomEnd = cumulatedMin;
       }
     },
     initChart() {
       this.chart = echarts.init(this.$el, "macarons");
     },
     setOptions({ val, timeline, chartOption } = {}) {
+      console.log("val", val);
       this.chart.setOption({
         xAxis: {
           data: timeline,
@@ -142,9 +155,9 @@ export default {
         dataZoom: [
           {
             type: "inside",
-
-            start: this.zoomStart,
-            end: this.zoomEnd,
+            disabled: this.isRealTime,
+            startValue: this.zoomStart,
+            endValue: this.zoomEnd,
           },
           // {
           //   type: "slider",
@@ -195,8 +208,9 @@ export default {
               },
             },
             data: val,
-            animationDuration: 2800,
-            animationEasing: "quadraticOut",
+            animation: false,
+            // animationDuration: 2800,
+            // animationEasing: "quadraticOut",
             markLine: {
               data: [
                 {

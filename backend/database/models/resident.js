@@ -20,6 +20,14 @@ const ResidentSchema = new Schema({
     // Remark
     remark: String,
 
+    // Vital Signs Threshold
+    vitalSignsThresh: { 
+        temp: Number,
+        hr: Number,
+        spo2: Number,
+        pi: Number
+    },
+
     vitalSignsRecords: [ {
         day: Date,
         records: []  // record data format { date: Date, vitalSigns: Object }
