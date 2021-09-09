@@ -120,8 +120,8 @@ var lineChartData = {
       areaColor: "#f3f8ff",
       // color: "#f4516c",
       // areaColor: "#f7b5c0",
-      threshold: 92,
-      gt: 92,
+      threshold: 90,
+      gt: 90,
       lte: 100,
       ymin: 70,
     },
@@ -194,9 +194,9 @@ export default {
       mode: 'real_time',
       vitalSignsThresh: {
         temp: 37.5,
-        hr: 0,
+        hr: -1,
         spo2: 90,
-        pi: 0
+        pi: -1
       },
       watchingPeriod: 120,
       periodOptions: [{

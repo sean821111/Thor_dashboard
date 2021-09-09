@@ -53,6 +53,12 @@ router.post('/add', authenticated, async (req, res, next) => {
             console.log('Resident found: ' + resident);
             res.status(403).end('Resident id number already exists');
         } else {
+            data['vitalSignsThresh'] = {
+                temp: 37.5,
+                hr: -1,
+                spo2: 90,
+                pi: -1
+            };
             resident = new Resident(data);
             resident.save();
 
