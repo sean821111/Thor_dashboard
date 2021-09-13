@@ -20,8 +20,8 @@
     >
       <span
         v-if="
-          (activeDevice.vitalSigns.spo2 != NONE) &
-          (activeDevice.vitalSigns.spo2 < SPO2_THRESH)
+          (activeDevice.vitalSigns.temp != NONE && activeDevice.vitalSigns.temp > resident.vitalSignsThresh.temp) ||
+          (activeDevice.vitalSigns.spo2 != NONE && activeDevice.vitalSigns.spo2 < resident.vitalSignsThresh.spo2)
         "
       >
         <svg-icon icon-class="warning" class-name="icon-warning" />
@@ -110,27 +110,32 @@
           <div class="icon-temp">
             <svg-icon icon-class="celsius" class-name="card-panel-icon" />
           </div>
-          <span>體溫</span>
-          <span style="float: right">
-            {{
-              activeDevice.vitalSigns.temp == NONE
-                ? "----"
-                : Math.round(activeDevice.vitalSigns.temp * 10) / 10
-            }}
-            ℃
-          </span>
+          <div
+            v-bind:class="{ 'temp-enhance':
+              activeDevice.vitalSigns.temp != NONE &&
+              activeDevice.vitalSigns.temp > resident.vitalSignsThresh.temp
+            }"
+          >
+            <span>體溫</span>
+            <span style="float: right">
+              {{
+                activeDevice.vitalSigns.temp == NONE
+                  ? "----"
+                  : Math.round(activeDevice.vitalSigns.temp * 10) / 10
+              }}
+              ℃
+            </span>
+          </div>
         </div>
 
         <div class="text">
           <svg-icon icon-class="oxygen" class-name="card-panel-icon" />
 
           <div
-            v-bind:class="[
+            v-bind:class="{ 'spo2-enhance':
               activeDevice.vitalSigns.spo2 != NONE &&
-              activeDevice.vitalSigns.spo2 < SPO2_THRESH
-                ? 'spo2-enhance'
-                : '',
-            ]"
+              activeDevice.vitalSigns.spo2 < resident.vitalSignsThresh.spo2
+            }"
           >
             <span>血氧濃度</span>
             <span style="float: right">
@@ -408,7 +413,7 @@ export default {
 .icon-pi {
   color: #34bfa3;
 }
-.spo2-enhance {
+.spo2-enhance, .temp-enhance {
   color: red;
 }
 

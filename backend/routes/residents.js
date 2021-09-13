@@ -138,6 +138,11 @@ router.put('/update/vital/signs/thresh/:id', authenticated, async (req, res, nex
             if (err) {
                 next(err);
             } else if (result.n != 0) {
+                var message = {
+                    residentId: req.params.id,
+                    vitalSignsThresh: req.body.vitalSignsThresh
+                }
+                deviceUpdate.sse.send(message);
                 res.status(200).end();
             } else {
                 res.status(404).end('Resident not found');
