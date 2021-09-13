@@ -74,4 +74,24 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+setTimeout(() => {
+  const axios = require('axios')
+  axios
+    .post('http://localhost:3000/api/v1/users/register', {
+      username:"admin",
+      password:"123456", 
+      roles: ["admin"]
+    })
+    .then(res => {
+      console.log(`statusCode: ${res.status}`)
+      // console.log(res)
+    })
+    .catch(error => {
+      console.error(error)
+    })
+  }, 1000);
+
 module.exports = app;
+
+
+
